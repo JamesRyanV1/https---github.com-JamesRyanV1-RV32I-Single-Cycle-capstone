@@ -7,12 +7,12 @@ module decoder (
     output logic alu_op,
     output logic [2:0] func3,
     output logic [6:0] func7,
-    output logic [2:0] imm_type // used by the sign extender
+    output logic [2:0] imm_type, // used by the sign extender
+    output logic [6:0] opcode
      
     // Mem read and write are handled by the control, not important here.
 );
 
-    logic [6:0] opcode;
     assign opcode = instruction[6:0];
 
 
