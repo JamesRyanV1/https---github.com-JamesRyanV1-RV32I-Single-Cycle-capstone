@@ -1,11 +1,13 @@
 module cpu (
-    input clk,
-    input rst,
+    input wire clk,
+    input wire rst,
+
+    output logic [31:0] readd // JUST FOR TESTING
 );
 
 
 /*
-psuedocode but wires for lw instruction
+my thoughts but wires for lw instruction
 
 GETTING DATA MEMORY
 read_data from data                     -> write_data for registers
@@ -30,7 +32,8 @@ logic [31:0] data_adress; // data adress to be read (wire will go between the al
 logic reg_write; // 1 bit wire from control to registers
 logic[3:0] inst_type;
 logic[2:0] imm_type; // used only by the sign extender, if not usefull later will make the same signal as inst_type
-logic [31:0] regData1
+logic [31:0] regData1;
+logic memRead;
 
 // WIRES DIRECTLY FROM INSTRUCTION
 logic [31:0] instruction;
@@ -41,7 +44,7 @@ logic [2:0] funct3;
 logic [6:0] funct7;
 logic [4:0] rd;
 logic [4:0] reg_destination;
-// MORE PORTS COMING IN THE FUTURE
+// NEW BUS DLC COMING SOON*
 
 
 
@@ -91,7 +94,7 @@ registerFile (
     .enableWrite(reg_write)
 
     // read data, not destination register (bad naming mb)
-    .rd1()                             // ill add this later 
+    .rd1(readd)                        // ill add this later 
     //.rd2
 
 )
@@ -101,10 +104,10 @@ dataMemory (
     .clk(clk)
     .address(data_adress)
     .write_data()
-    .write_enabled()
+    .write_enabled(memRead)
     .rst_data(rst)
 
-    .read_data(regData1)
+    .read_data(dData)
 )
 
 // ALU for data memory adress calculation
@@ -113,7 +116,7 @@ alu (
     .rst(rst)
     .cntrl(alu_op) // from control module, control must be modified further to support different functions per inst type
     .d1(regData1)
-    .d2                                 // MAKE THIS THE SIGN EXTENDED IMMEDIATE
+    .d2(immediate)                      // MAKE THIS THE SIGN EXTENDED IMMEDIATE
 
     .alu_output(data_adress) // to data memory
     .zero                               // useless ports, I already know what zero is im sure the machine can do the same
@@ -129,12 +132,12 @@ control (
     .alu_last_bit // I sure wonder where this binds to
 
     .alu_control 
-    .imm_source 
-    .mem_read // ignore
-    .mem_write // ignore
+    .imm_source // I realy need this but I realy dont need this (1 or 0)
+    .mem_read(memRead) // ignore
+//    .mem_write // ignore
     .reg_write(reg_write) // goes to register file
-    .alu_source
-    .pc_source
+    .alu_source                         // IF 1'b1 IS IMMEDIATE, ELSE SOURCE IS REGISTER? alo does not supoort this yet for lw
+//    .pc_source
     .alu_op(alu_op)
 )
 
@@ -152,8 +155,8 @@ decoder (
 
     .inst_type(inst_type) // to extender
     .rd(reg_destination)
-    .rs1
-    .alu_op()
+    .rs1(rs1)                    
+    .alu_op(alu_op)                    // js edition for now
     .func3(func3)
     .funct7(func7)
     .imm_type(imm_type)
