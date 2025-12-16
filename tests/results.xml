@@ -1,0 +1,8 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1765916783" />
+    <testcase name="register_file_test" classname="registerFile" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/tests/registerFile.py" lineno="11" time="0.004178047180175781" sim_time_ns="73.0" ratio_time="17472.277562200412">
+      <failure error_type="AssertionError" error_msg="assert LogicArray('00000000000000000000000000000000', Range(31, 'downto', 0)) == '11001111010101100000111111010110'&#10; +  where LogicArray('00000000000000000000000000000000', Range(31, 'downto', 0)) = LogicArrayObject(registerFile.rd1).value&#10; +    where LogicArrayObject(registerFile.rd1) = HierarchyObject(registerFile).rd1" />
+    </testcase>
+  </testsuite>
+</testsuites>
