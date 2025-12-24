@@ -1,11 +1,11 @@
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, ReadOnly
+from cocotb.triggers import RisingEdge, ReadOnly, ReadWrite
 import random as rd
 
 
 @cocotb.test()
-async def registerFile_test(dut):
+async def registerFile(dut):
     """Test registerFile functionality
     
     Test coverage:
@@ -18,7 +18,7 @@ async def registerFile_test(dut):
     """
     
     # Start a cocotb-driven clock (10 ns period)
-    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
     
     # Set all ports to 0 to start
     dut.rst.value = 1
@@ -70,7 +70,6 @@ async def registerFile_test(dut):
         # Update software model if write was enabled
         if enable_write and rd_addr != 0:
             register_model[rd_addr] = write_data
-    
     # Test writing to register 0 - should stay 0
     dut.rs1.value = 0
     dut.rs2.value = 0
@@ -87,10 +86,13 @@ async def registerFile_test(dut):
     
     assert dut.rd1.value == 0, \
         f"Register 0 write protection failed: got {dut.rd1.value:#010x}, expected 0"
-    
+    await RisingEdge(dut.clk)
+    await ReadWrite()
     # Final verification of all non-zero registers match our model
     for reg_idx in range(1, 32):
         dut.rs1.value = reg_idx
         await ReadOnly()
         assert dut.rd1.value == register_model[reg_idx], \
             f"Register {reg_idx} mismatch: got {dut.rd1.value:#010x}, expected {register_model[reg_idx]:#010x}"
+        await RisingEdge(dut.clk)
+        await ReadWrite()

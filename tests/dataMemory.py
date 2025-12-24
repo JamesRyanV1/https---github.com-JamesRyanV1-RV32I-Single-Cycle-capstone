@@ -8,8 +8,8 @@ import random as rd
 
 
 @cocotb.test()
-async def test_data_memory_basic(dut):
-    """Basic testbench for the `memory` module.
+async def dataMemory(dut):
+    """Basic testbench for the `dataMemory` module.
 
     Tests:
     - Reset clears all words to 0
@@ -28,7 +28,7 @@ async def test_data_memory_basic(dut):
         WORDS = 64
 
     # Start clock
-    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
 
     # Helper to pulse reset (rst_data synchronous to posedge)
     async def reset_pulse():
@@ -73,6 +73,7 @@ async def test_data_memory_basic(dut):
     log.info("Write/read OK at address %d: %s", test_addr, hex(rd_val))
 
     # Test write ignored at address 0
+    await RisingEdge(dut.clk)  # ensure clean edge (needed because this is now the readonly stage of the simulation)
     dut.address.value = 0
     dut.write_data.value = 0x12345678
     dut.write_enable.value = 1
@@ -85,6 +86,7 @@ async def test_data_memory_basic(dut):
     log.info("Write to address 0 correctly ignored")
 
     # Test out-of-bounds write/read (index == WORDS)
+    await RisingEdge(dut.clk)  # ensure clean edge (im not taking any changes istg)
     oob_addr = WORDS * 4
     dut.address.value = oob_addr
     dut.write_data.value = 0xCAFEBABE
@@ -92,15 +94,17 @@ async def test_data_memory_basic(dut):
     await RisingEdge(dut.clk)
     dut.write_enable.value = 0
     dut.address.value = oob_addr
+    await RisingEdge(dut.clk)  # just making sure
     await ReadOnly()
     rd_val = int(dut.read_data.value)
     assert rd_val == 0, f"Out-of-bounds read should be 0, got {hex(rd_val)}"
     log.info("Out-of-bounds write/read ignored as expected")
-
+    await RisingEdge(dut.clk)  # just making sure
     # Randomized stress test: perform random writes and maintain a software model
     model = {0: 0}  # address index -> value; index 0 is always 0
     operations = 200
     for _ in range(operations):
+        await RisingEdge(dut.clk)
         addr_word = rd.randrange(0, WORDS + 2)  # sometimes out-of-bounds
         addr = addr_word * 4
         value = rd.getrandbits(32)
@@ -116,7 +120,8 @@ async def test_data_memory_basic(dut):
             if addr != 0 and addr_word < WORDS:
                 model[addr_word] = value
         else:
-            # read and compare
+            # read and compare - set inputs before ReadOnly()
+            dut.write_enable.value = 0
             dut.address.value = addr
             await ReadOnly()
             rd_val = int(dut.read_data.value)

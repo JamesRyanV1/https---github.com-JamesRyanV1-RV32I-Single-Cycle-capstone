@@ -1,4 +1,4 @@
-module memory #(
+module dataMemory #(
     parameter WORDS = 64 // Supports bigger if needed
 ) (
     input logic clk,
@@ -36,7 +36,7 @@ end
 
 // Read logic
 always_comb begin
-    int index = address[31:2];    // No 0 indexing here (hopefully)
+    static index = address[31:2];    // No 0 indexing here (hopefully)
     if (index < WORDS)
         read_data = mem[index];
     // Ff index would be out of bounds, read off all 0s for saftey, will be visable in debugging later

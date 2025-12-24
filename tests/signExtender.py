@@ -12,11 +12,11 @@ from util import random_binary # random binary function from my utils
                 # I HAVE BEEN WARNED (BY ME(THANKS ME))
 
 @cocotb.test()
-async def sign_extender_test(dut):
+async def signExtender(dut):
     # start a  cocotb-driven clock (10 ns period)
-    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
     dut.rst.value = 1
-    dut.instruction.value = 0
+    dut.inst.value = 0
 
     # turns off reset
     await RisingEdge(dut.clk)
@@ -32,10 +32,10 @@ async def sign_extender_test(dut):
             num_12bit |= 0x800  # Set the sign bit for negative numbers
 
         # Prepare the instruction with the 12-bit immediate value
-        instruction = num_12bit & 0xFFF  # Ensure it's only 12 bits
+        inst = num_12bit & 0xFFF  # Ensure it's only 12 bits
 
         # Set input port to be the instruction containing the 12 bit number 
-        dut.instruction.value = instruction
+        dut.inst.value = inst
 
         # Wait for clock next clock cycle
         await RisingEdge(dut.clk)
@@ -47,4 +47,5 @@ async def sign_extender_test(dut):
             expected_value = num_12bit & 0x00000FFF  # Zero extend to 32 bits
 
         # Check if output port is the expected 32 bit number, sign extended from the 12 bit number
-        assert dut.sign_extended_output.value == expected_value, f"Sign extension failed for {num_12bit:#05x}: got {dut.sign_extended_output.value:#010x}, expected {expected_value:#010x}"
+        got = int(dut.ext_imm.value)
+        assert got == expected_value, f"Sign extension failed for {num_12bit:#05x}: got {got:#010x}, expected {expected_value:#010x}"
