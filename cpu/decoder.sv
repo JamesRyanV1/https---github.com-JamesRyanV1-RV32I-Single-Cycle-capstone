@@ -6,7 +6,6 @@ module decoder (
     output logic [3:0] inst_type,
     output logic [4:0] rd,
     output logic [4:0] rs1,
-    output logic alu_op,
     output logic [2:0] func3,
     output logic [6:0] func7,
     output logic [2:0] imm_type, // used by the sign extender
@@ -27,10 +26,10 @@ module decoder (
         rd = 5'b0;
         func3 = 3'b0;
         func7 = 7'b0;
-        alu_op = 1'b0;
+        // alu_op removed; control drives ALU directly
 
         case (opcode)
-            7'b0000001: begin
+            7'b0000011: begin
                 inst_type = 4'b0001; // I type instruction
                 imm_type = 3'b000;
                 
