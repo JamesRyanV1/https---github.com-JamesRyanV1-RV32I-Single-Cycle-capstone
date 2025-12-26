@@ -6,17 +6,19 @@ module alu (
     input logic [31:0] d2,
 
     output logic [31:0] alu_output,
-    output logic zero;
-    output logic last_bit;
+    output logic zero,
+    output logic last_bit
 
  
 );
+    always_comb begin
+        case (cntrl) // the "cpu_" is needed to avoid naming issues
+            4'b0000: begin
+                alu_output = d1 + d2;
+                end
 
-case (cntrl) // the "cpu_" is needed to avoid naming issues
-    4'b0000: alu_output = d1 + d2
 
-
-
-    default : alu_output = 0; 
-endcase
+            default : alu_output = 0; 
+        endcase
+    end
 endmodule

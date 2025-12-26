@@ -18,7 +18,16 @@ module control (
 always_comb begin
 
     case (op)
-        6'b000011 : begin // type for lw (just for lw rn, nested case needed later for more func3s per inst type)
+    // zeros on default
+    default : begin
+            reg_write = 1'b0;
+            imm_source = 3'b000;
+            mem_write = 1'b0;
+            mem_read = 1'b0;
+            alu_source = 1'b0;
+            alu_op = 4'b0000;
+        end
+    7'b0000011 : begin // type for lw (just for lw rn, nested case needed later for more func3s per inst type)
             reg_write = 1'b1;
             imm_source = 3'b000;
             mem_write = 1'b0; // no writing for this

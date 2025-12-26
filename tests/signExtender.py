@@ -1,51 +1,61 @@
-# THIS CODE WAS WRITTEN ENTIRELY BY COPILOT. TODAY WE WILL BE LOOKING AT HOW GOOD IT IS AT WRITING TESTBENCHES FOR COCOTB
-# the above message was also written by copilot and i think its funny and so im leaving it and not changing it and im sorry if you hate it
-# @grok is this real 
-
 import cocotb
-from cocotb.clock import Clock # very nice trigger
-from cocotb.triggers import RisingEdge, ReadOnly, Timer, ReadWrite # cocotb stuff
-import logging # learn how to use this
+from cocotb.clock import Clock
+from cocotb.triggers import RisingEdge, ReadOnly
 import random as rd
-from util import random_binary # random binary function from my utils
-                # RANDOM BINARY MAY NOT WORK WITH THIS
-                # I HAVE BEEN WARNED (BY ME(THANKS ME))
 
 @cocotb.test()
-async def signExtender(dut):
-    # start a  cocotb-driven clock (10 ns period)
+async def signExtender_test(dut):
+    """Test signExtender for I-type immediates (imm_type = 3'b000)
+    
+    Tests:
+    - 12 LSBs match instruction bits [31:20]
+    - 20 MSBs are sign-extended from bit 31
+    """
+    
     cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
+    
+    # Initialize
     dut.rst.value = 1
     dut.inst.value = 0
-
-    # turns off reset
+    dut.imm_type.value = 0
+    
     await RisingEdge(dut.clk)
     dut.rst.value = 0
     await RisingEdge(dut.clk)
-
-    # loop to test random sign extensions a couple hundred times
-    for i in range(200):
-        # Create a random 12 bit number
-        num_12bit = rd.randint(0, 0xFFF)  # 12-bit number range: 0 to 4095
-        # Randomly decide if it should be negative
-        if rd.choice([True, False]):
-            num_12bit |= 0x800  # Set the sign bit for negative numbers
-
-        # Prepare the instruction with the 12-bit immediate value
-        inst = num_12bit & 0xFFF  # Ensure it's only 12 bits
-
-        # Set input port to be the instruction containing the 12 bit number 
+    
+    # Test I-type sign extension (imm_type = 3'b000)
+    for _ in range(100):
+        # Generate random 32-bit instruction
+        inst = rd.randint(0, 0xFFFFFFFF)
+        
+        # Set inputs
         dut.inst.value = inst
-
-        # Wait for clock next clock cycle
-        await RisingEdge(dut.clk)
-
-        # Calculate expected sign-extended 32 bit number
-        if num_12bit & 0x800:  # If sign bit is set
-            expected_value = num_12bit | 0xFFFFF000  # Sign extend to 32 bits
-        else:
-            expected_value = num_12bit & 0x00000FFF  # Zero extend to 32 bits
-
-        # Check if output port is the expected 32 bit number, sign extended from the 12 bit number
+        dut.imm_type.value = 0b000  # I-type
+        
+        await ReadOnly()
+        
+        # Extract expected values
+        imm_12bit = (inst >> 20) & 0xFFF      # bits [31:20]
+        sign_bit = (inst >> 31) & 0x1         # bit 31
+        sign_extend = 0xFFFFF if sign_bit else 0x00000  # 20-bit sign extension
+        expected_ext_imm = (sign_extend << 12) | imm_12bit
+        
+        # Read actual output
         got = int(dut.ext_imm.value)
-        assert got == expected_value, f"Sign extension failed for {num_12bit:#05x}: got {got:#010x}, expected {expected_value:#010x}"
+        
+        # Assert: 12 LSBs match instruction immediate
+        lsb_12 = got & 0xFFF
+        assert lsb_12 == imm_12bit, (
+            f"I-type 12 LSBs mismatch for {inst:#010x}: "
+            f"expected {imm_12bit:#05x}, got {lsb_12:#05x}"
+        )
+        
+        # Assert: 20 MSBs are correct sign extension
+        msb_20 = (got >> 12) & 0xFFFFF
+        expected_msb = sign_extend
+        assert msb_20 == expected_msb, (
+            f"I-type 20 MSBs mismatch for {inst:#010x}: "
+            f"expected {expected_msb:#08x}, got {msb_20:#08x}"
+        )
+        
+        await RisingEdge(dut.clk)

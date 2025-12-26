@@ -1,8 +1,6 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1766588144" />
-    <testcase name="decoder" classname="decoder" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/tests/decoder.py" lineno="7" time="0.0016369819641113281" sim_time_ns="30.0" ratio_time="18326.408389163997">
-      <failure error_type="AssertionError" error_msg="rd decode failed for 0xd08cd59b: got 0x00, expected 0x16, inst=11010000100011001101010110011011&#10;assert 0 == 22" />
-    </testcase>
+    <property name="random_seed" value="1766760774" />
+    <testcase name="control" classname="control" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/tests/control.py" lineno="4" time="0.0004546642303466797" sim_time_ns="0.0" ratio_time="0.0" />
   </testsuite>
 </testsuites>

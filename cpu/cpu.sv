@@ -44,7 +44,7 @@ logic [2:0] funct3;
 logic [6:0] funct7;
 logic [4:0] rd;
 logic [4:0] reg_destination;
-// NEW BUS DLC COMING SOON*
+// NEW BUS DLC COMING SOON*tm*
 
 
 
@@ -84,7 +84,7 @@ logic [4:0] reg_destination;
 // );
 
 // Register File
-registerFile (
+registerFile (      // WORKS FOR NOW
     .clk(clk)
     .rst(rst)
     .rs1(rs1) // not data,, output port instead
@@ -100,7 +100,7 @@ registerFile (
 )
 
 // Data Memory
-dataMemory (
+dataMemory (          // WORKS FOR NOW
     .clk(clk)
     .address(data_adress)
     .write_data()
@@ -111,7 +111,7 @@ dataMemory (
 )
 
 // ALU for data memory adress calculation
-alu (
+alu (               // WORKS FOR NOW
     .clk(clk)
     .rst(rst)
     .cntrl(alu_op) // from control module, control must be modified further to support different functions per inst type
@@ -124,7 +124,7 @@ alu (
 )
 
 // Control unit
-control (
+control (               // NEEDS TEST
     .op(opcode) 
     .func3(func3)
     .func7(func7)
@@ -142,15 +142,19 @@ control (
 )
 
 // Sign extender
-signExtender (
+signExtender (              // WORKS FOR NOW
+    .clk(clk)
+    .rst(rst)
     .inst(instruction)
     .imm_type (imm_type) // from decoder
 
     .ext_imm(immediate)
 )
 
-// Decoder
-decoder (
+// Decoder  
+decoder (               // WORKS FOR NOW
+    .clk(clk)
+    .rst(rst)
     .instruction(instruction)
 
     .inst_type(inst_type) // to extender
