@@ -6,6 +6,7 @@ module decoder (
     output logic [3:0] inst_type,
     output logic [4:0] rd,
     output logic [4:0] rs1,
+    output logic [4:0] rs2,
     output logic [2:0] func3,
     output logic [6:0] func7,
     output logic [2:0] imm_type, // used by the sign extender
@@ -37,6 +38,15 @@ module decoder (
                 immediate = instruction[31:20];
                 rs1 = instruction[19:15];
                 rd = instruction[11:7];
+                func3 = instruction[14:12];
+            end
+            7'b0100011: begin
+                inst_type = 4'b0010; // S type instruction
+                imm_type = 3'b001;
+                
+                // S-type format
+                immediate = {instruction[31:25], instruction[11:7]};
+                rs1 = instruction[19:15];
                 func3 = instruction[14:12];
             end
             

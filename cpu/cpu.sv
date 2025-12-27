@@ -34,13 +34,16 @@ logic        reg_write; // 1 bit wire from control to registers
 logic [3:0]  inst_type;
 logic [2:0]  imm_type; // used only by the sign extender
 logic [31:0] regData1;
+logic [31:0] regData2;
 logic        memRead;
+logic        memWrite;
 logic        alu_zero;
 logic        alu_last_bit;
 
 // WIRES DIRECTLY FROM INSTRUCTION
 logic [31:0] instruction;
 logic [4:0] rs1;
+logic [4:0] rs2;
 logic [31:0] immediate;
 logic [6:0] opcode;
 logic [2:0] func3;
@@ -91,20 +94,20 @@ registerFile register_file_inst (
     .clk(clk),
     .rst(rst),
     .rs1(rs1),
-    .rs2(5'b0),
+    .rs2(rs2),
     .rd(reg_destination),
     .wd(dData),
     .enableWrite(reg_write),
     .rd1(regData1),
-    .rd2()
+    .rd2(regData2)
 );
 
 // Data Memory
 dataMemory data_memory_inst (
     .clk(clk),
     .address(data_address),
-    .write_data(32'b0),
-    .write_enable(1'b0),
+    .write_data(regData2),
+    .write_enable(memWrite),
     .rst_data(rst),
     .read_data(dData)
 );
@@ -131,7 +134,7 @@ control control_inst (
     .alu_control(),
     .imm_source(),
     .mem_read(memRead),
-    .mem_write(),
+    .mem_write(memWrite),
     .reg_write(reg_write),
     .alu_source(),
     .pc_source(),
@@ -155,6 +158,7 @@ decoder decoder_inst (
     .inst_type(inst_type),
     .rd(reg_destination),
     .rs1(rs1),
+    .rs2(rs2),
     .func3(func3),
     .func7(func7),
     .imm_type(imm_type),

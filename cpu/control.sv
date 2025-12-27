@@ -38,7 +38,16 @@ always_comb begin
             alu_control = alu_op;
 
         end
+    7'b0100011 : begin // type for sw
+            reg_write   = 1'b0; // no writing to reg
+            imm_source  = 3'b001;
+            mem_write   = 1'b1; // writing enabled
+            mem_read    = 1'b0; // no reading
+            alu_source  = 1'b1; // imm
+            alu_op      = 4'b0000; // (add)
+            alu_control = alu_op;
 
+        end
     endcase
 end
 
