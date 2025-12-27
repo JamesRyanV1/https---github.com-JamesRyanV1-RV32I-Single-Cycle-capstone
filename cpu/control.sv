@@ -26,7 +26,7 @@ always_comb begin
             mem_read    = 1'b0;
             alu_source  = 1'b0;
             alu_op      = 4'b0000;
-            alu_control = alu_op;
+            alu_control = 4'b0000;
         end
     7'b0000011 : begin // type for lw (just for lw rn, nested case needed later for more func3s per inst type)
             reg_write   = 1'b1;

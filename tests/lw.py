@@ -17,7 +17,7 @@ def encode_lw(rd: int, rs1: int, imm: int) -> int:
 async def test_lw_basic(dut):
 	"""Load word writes data memory contents into destination register."""
 
-	clock = Clock(dut.clk, 10, units="ns")
+	clock = Clock(dut.clk, 10, unit="ns")
 	cocotb.start_soon(clock.start())
 
 	# Reset
@@ -41,10 +41,13 @@ async def test_lw_basic(dut):
 
 	# Drive lw instruction
 	dut.instruction_in.value = encode_lw(dest_reg, base_reg, imm)
-
-	# Allow combinational path to settle then capture on rising edge
-	await RisingEdge(dut.clk)
-
+    # Allow combinational path to settle then capture on rising edge
+	await RisingEdge(dut.clk)   # execute/load
+	await RisingEdge(dut.clk)   # writeback
 	# The load data should appear on readd and be written into dest_reg on this edge
-	assert dut.readd.value.integer == mem_data, "Data memory read should match expected value"
-	assert dut.register_file_inst.regs[dest_reg].value.integer == mem_data, "Destination register should capture loaded word"
+	assert int(dut.readd.value) == mem_data, "Data memory read should match expected value"
+	assert int(dut.register_file_inst.regs[dest_reg].value) == mem_data, "Destination register should capture loaded word"
+
+    
+
+    
