@@ -1,76 +1,98 @@
 import cocotb
-from cocotb.clock import Clock # very nice trigger
-from cocotb.triggers import RisingEdge, ReadOnly, Timer, ReadWrite # cocotb stuff
-import logging # learn how to use this
+from cocotb.clock import Clock
+from cocotb.triggers import RisingEdge, ReadOnly, ReadWrite
 import random as rd
-from util import random_binary # random binary function from my utils
-                # RANDOM BINARY MAY NOT WORK WITH THIS
-                # I HAVE BEEN WARNED (BY ME(THANKS ME))
 
 
 @cocotb.test()
-async def register_file_test(dut):
-
-    # start a  cocotb-driven clock (10 ns period)
-    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+async def registerFile(dut):
+    """Test registerFile functionality
+    
+    Test coverage:
+    - Set all ports to 0 to start
+    - Loop through and perform random reads/writes:
+        - Random addresses (1-31)
+        - Read from rs1 and rs2, compare to expected values
+        - Write to rd if enableWrite is high
+    - Try to write to register 0, ensure it stays 0
+    """
+    
+    # Start a cocotb-driven clock (10 ns period)
+    cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
+    
+    # Set all ports to 0 to start
     dut.rst.value = 1
-    dut.rs1 = 0
-    dut.rs2 = 0
-    dut.rd = 0
-    dut.wd = 0 
-    dut.enableWrite
-
-
-    # turns off reset
+    dut.rs1.value = 0
+    dut.rs2.value = 0
+    dut.rd.value = 0
+    dut.wd.value = 0
+    dut.enableWrite.value = 0
+    
+    # Wait for reset to take effect
     await RisingEdge(dut.clk)
     dut.rst.value = 0
     await RisingEdge(dut.clk)
-
-    # makes all the regs 0 to start
-    fake_regs = [0 for i in range(32)]
-
-
-    # loop to test random reads/writes a couple hundred times
-    for i in range(550):
-        # random adresses, 1-31
-        ad1 = rd.randint(1,31)
-        ad2 = rd.randint(1,31)
-        ad3 = rd.randint(1,31)
-        write_value = random_binary(32)
-
-        #reads
-        await Timer(1,units="ns")
-        dut.rs1.value = ad1
-        dut.rs2.value = ad2
-        await Timer(1,units="ns")
-        # makes sure the data being read is the same as the data that should be in the regs
-        # data that should be there represented by the stand in regs, (im not making a path between this and memory for the testbench)
-        assert dut.rd1.value == fake_regs[ad1]
-        assert dut.rd2.value == fake_regs[ad2]
-
-        #random writes, stored then read when loops
-        dut.ad3.value = ad3
-        dut.enableWrite.value = 1 #enables write for this portion
-        dut.wd = write_value
-        await RisingEdge(dut.clk)
-        dut.enableWrite.value = 0
-        fake_regs[ad3] = write_value
-        await Timer(1,units="ns")
+    
+    # Dictionary to track register values in software model
+    register_model = {i: 0 for i in range(32)}
+    
+    # Perform random reads/writes
+    for iteration in range(200):
+        # Randomly choose addresses (1-31 for writes, 0-31 for reads)
+        rs1_addr = rd.randint(0, 31)
+        rs2_addr = rd.randint(0, 31)
+        rd_addr = rd.randint(1, 31)  # Don't write to 0
+        write_data = rd.randint(0, 0xFFFFFFFF)
+        enable_write = rd.choice([0, 1])
         
-    # Try and write to 0, after loop bc would unsettle the zerod fake regs
-    await Timer(1, units="ns")
-    dut.ad3.value = 0
-    dut.enableWrite.value=1
-    dut.wd = random_binary(32)
+        # Set inputs
+        dut.rs1.value = rs1_addr
+        dut.rs2.value = rs2_addr
+        dut.rd.value = rd_addr
+        dut.wd.value = write_data
+        dut.enableWrite.value = enable_write
+        
+        # Wait for combinational reads to settle
+        await ReadOnly()
+        
+        # Check read outputs
+        expected_rd1 = register_model[rs1_addr]
+        expected_rd2 = register_model[rs2_addr]
+        
+        assert dut.rd1.value == expected_rd1, \
+            f"Register read failed at rs1={rs1_addr}: got {dut.rd1.value:#010x}, expected {expected_rd1:#010x}"
+        assert dut.rd2.value == expected_rd2, \
+            f"Register read failed at rs2={rs2_addr}: got {dut.rd2.value:#010x}, expected {expected_rd2:#010x}"
+        
+        # Wait for clock edge (write happens on clock edge)
+        await RisingEdge(dut.clk)
+        
+        # Update software model if write was enabled
+        if enable_write and rd_addr != 0:
+            register_model[rd_addr] = write_data
+    # Test writing to register 0 - should stay 0
+    dut.rs1.value = 0
+    dut.rs2.value = 0
+    dut.rd.value = 0
+    dut.wd.value = 0xDEADBEEF  # Try to write this to register 0
+    dut.enableWrite.value = 1
+    
     await RisingEdge(dut.clk)
-    dut.wd.value = 0
-    fake_regs[ad3] = write_value
-    await Timer(1, units="ns")
-
-    # rd1 (if 0) should end up as 0, final assertion after trying to change it
-    await Timer(1, units="ns")
-    dut.ad1.value = 0
-    await Timer(1, units="ns")
-    assert int(dut.rd1.value) == 0
-
-    # if random read/writtes work, and 0 cannot be changed from 0, cpu works
+    
+    # Read from register 0
+    dut.rs1.value = 0
+    dut.enableWrite.value = 0
+    await ReadOnly()
+    
+    assert dut.rd1.value == 0, \
+        f"Register 0 write protection failed: got {dut.rd1.value:#010x}, expected 0"
+    await RisingEdge(dut.clk)
+    await ReadWrite()
+    # Final verification of all non-zero registers match our model
+    for reg_idx in range(1, 32):
+        dut.rs1.value = reg_idx
+        await ReadOnly()
+        assert dut.rd1.value == register_model[reg_idx], \
+            f"Register {reg_idx} mismatch: got {dut.rd1.value:#010x}, expected {register_model[reg_idx]:#010x}"
+        await RisingEdge(dut.clk)
+        await ReadWrite()

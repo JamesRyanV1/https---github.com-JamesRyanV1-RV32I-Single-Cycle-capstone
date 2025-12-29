@@ -1,6 +1,6 @@
 module control (
     input logic [6:0] op,
-    input logic [3:0] func3,
+    input logic [2:0] func3,
     input logic [6:0] func7, // for use later
     input logic alu_zero,
     input logic alu_last_bit,
@@ -16,18 +16,34 @@ module control (
 );
 
 always_comb begin
+    // Default all outputs to 0
+    alu_control = 4'b0000;
+    imm_source = 3'b000;
+    mem_read = 1'b0;
+    mem_write = 1'b0;
+    reg_write = 1'b0;
+    alu_source = 1'b0;
+    pc_source = 1'b0;
+    alu_op = 4'b0000;
 
     case (op)
-        6'b000011 : begin // type for lw (just for lw rn, nested case needed later for more func3s per inst type)
-            reg_write = 1'b1;
-            imm_source = 3'b000;
-            mem_write = 1'b0; // no writing for this
-            mem_read = 1'b1; // Read enabled bc it has to be
-            alu_source = 1'b1; // imm
-            alu_op = 4'b0000; // (add)
-
+        7'b0100011: begin  // SW
+            mem_write = 1'b1;
+            mem_read = 1'b0;
+            reg_write = 1'b0;
+            alu_source = 1'b1;      // use immediate
+            imm_source = 3'b001;    // S-type
+            alu_op = 4'b0000;       // add
         end
-
+        7'b0000011: begin  // LW
+            mem_write = 1'b0;
+            mem_read = 1'b1;
+            reg_write = 1'b1;
+            alu_source = 1'b1;      // use immediate
+            imm_source = 3'b000;    // I-type
+            alu_op = 4'b0000;       // add
+        end
+        default: ;
     endcase
 end
 

@@ -1,8 +1,9 @@
 module cpu (
-    input wire clk,
-    input wire rst,
+    input  wire        clk,
+    input  wire        rst,
+    input  logic [31:0] instruction_in, // direct instruction feed for testing
 
-    output logic [31:0] readd // JUST FOR TESTING
+    output logic [31:0] readd // observation signal for testing
 );
 
 
@@ -25,26 +26,31 @@ decoder -> control
 
 
 // WIRES BETWEEN COMPONENTS NOT FROM INSTRUCTIONS
-logic [31:0] regData; // out from reg file (for verification thjat it is stored, used in later instructions)
+logic [31:0] regData; // unused placeholder for future instructions
 logic [31:0] dData; // out from data memory, in to reg file
-logic [3:0] alu_op; // add for lw, more later
-logic [31:0] data_adress; // data adress to be read (wire will go between the alu out and the data memory)
-logic reg_write; // 1 bit wire from control to registers
-logic[3:0] inst_type;
-logic[2:0] imm_type; // used only by the sign extender, if not usefull later will make the same signal as inst_type
+logic [3:0]  alu_ctrl; // control word into ALU
+logic [31:0] data_address; // data address to be read (wire between the ALU out and the data memory)
+logic        reg_write; // 1 bit wire from control to registers
+logic [3:0]  inst_type;
+logic [2:0]  imm_type; // used only by the sign extender
 logic [31:0] regData1;
-logic memRead;
+logic [31:0] regData2;
+logic        memRead;
+logic        memWrite;
+logic        alu_zero;
+logic        alu_last_bit;
 
 // WIRES DIRECTLY FROM INSTRUCTION
 logic [31:0] instruction;
 logic [4:0] rs1;
+logic [4:0] rs2;
 logic [31:0] immediate;
 logic [6:0] opcode;
-logic [2:0] funct3;
-logic [6:0] funct7;
+logic [2:0] func3;
+logic [6:0] func7;
 logic [4:0] rd;
 logic [4:0] reg_destination;
-// NEW BUS DLC COMING SOON*
+// NEW BUS DLC COMING SOON*tm*
 
 
 
@@ -84,32 +90,29 @@ logic [4:0] reg_destination;
 // );
 
 // Register File
-registerFile (
-    .clk(clk)
-    .rst(rst)
-    .rs1(rs1) // not data,, output port instead
-//    .rs2(rs2)
-    .rd(reg_destination)               // LOCATION COMES FROM DECODER NOT CONTROL. CREATE CONTROL PORT FOR THIS LATER
-    .wd(dData)
-    .enableWrite(reg_write)
-
-    // read data, not destination register (bad naming mb)
-    .rd1(readd)                        // ill add this later 
-    //.rd2
-
-)
+registerFile register_file_inst (
+    .clk(clk),
+    .rst(rst),
+    .rs1(rs1),
+    .rs2(rs2),
+    .rd(reg_destination),
+    .wd(dData),
+    .enableWrite(reg_write),
+    .rd1(regData1),
+    .rd2(regData2)
+);
 
 // Data Memory
-dataMemory (
-    .clk(clk)
-    .address(data_adress)
-    .write_data()
-    .write_enabled(memRead)
-    .rst_data(rst)
-
+dataMemory data_memory_inst (
+    .clk(clk),
+    .address(data_address),
+    .write_data(regData2),
+    .write_enable(memWrite),
+    .rst_data(rst),
     .read_data(dData)
-)
+);
 
+<<<<<<< HEAD
 // ALU for data memory adress calculation
 alu (
     .clk(clk)
@@ -122,45 +125,66 @@ alu (
     .zero                               // useless ports, I already know what zero is im sure the machine can do the same
     .last_bit
 )
+=======
+// ALU for data memory address calculation
+alu alu_inst (
+    .clk(clk),
+    .rst(rst),
+    .cntrl(alu_ctrl),
+    .d1(regData1),
+    .d2(immediate),
+    .alu_output(data_address),
+    .zero(alu_zero),
+    .last_bit(alu_last_bit)
+);
+>>>>>>> b9e8ade2a854973ddec0436419768f4e07dc0613
 
 // Control unit
-control (
-    .op(opcode) 
-    .func3(func3)
-    .func7(func7)
-    .alu_zero // n/a
-    .alu_last_bit // I sure wonder where this binds to
-
-    .alu_control 
-    .imm_source // I realy need this but I realy dont need this (1 or 0)
-    .mem_read(memRead) // ignore
-//    .mem_write // ignore
-    .reg_write(reg_write) // goes to register file
-    .alu_source                         // IF 1'b1 IS IMMEDIATE, ELSE SOURCE IS REGISTER? alo does not supoort this yet for lw
-//    .pc_source
-    .alu_op(alu_op)
-)
+control control_inst (
+    .op(opcode),
+    .func3(func3),
+    .func7(func7),
+    .alu_zero(alu_zero),
+    .alu_last_bit(alu_last_bit),
+    .alu_control(),
+    .imm_source(),
+    .mem_read(memRead),
+    .mem_write(memWrite),
+    .reg_write(reg_write),
+    .alu_source(),
+    .pc_source(),
+    .alu_op(alu_ctrl)
+);
 
 // Sign extender
-signExtender (
-    .inst(instruction)
-    .imm_type (imm_type) // from decoder
-
+signExtender sign_extender_inst (
+    .clk(clk),
+    .rst(rst),
+    .inst(instruction),
+    .imm_type(imm_type),
     .ext_imm(immediate)
-)
+);
 
 // Decoder
-decoder (
-    .instruction(instruction)
+decoder decoder_inst (
+    .clk(clk),
+    .rst(rst),
+    .instruction(instruction),
+    .inst_type(inst_type),
+    .rd(reg_destination),
+    .rs1(rs1),
+    .rs2(rs2),
+    .func3(func3),
+    .func7(func7),
+    .imm_type(imm_type),
+    .opcode(opcode),
+    .immediate()
+);
 
-    .inst_type(inst_type) // to extender
-    .rd(reg_destination)
-    .rs1(rs1)                    
-    .alu_op(alu_op)                    // js edition for now
-    .func3(func3)
-    .funct7(func7)
-    .imm_type(imm_type)
-    .opcode(opcode)
+// direct instruction drive for this testbench-style hookup
+assign instruction = instruction_in;
 
-)
+// expose loaded data for visibility
+assign readd = dData;
+
 endmodule
