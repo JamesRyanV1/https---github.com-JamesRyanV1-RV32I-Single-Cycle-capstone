@@ -171,4 +171,5 @@ assign instruction = instruction_in;
 
 // expose loaded data for visibility
 assign readd = dData;
+
 endmodule

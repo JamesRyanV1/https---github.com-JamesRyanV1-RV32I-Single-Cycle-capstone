@@ -42,12 +42,13 @@ module decoder (
             end
             7'b0100011: begin
                 inst_type = 4'b0010; // S type instruction
-                imm_type = 3'b001;
+                imm_type  = 3'b001;
                 
                 // S-type format
                 immediate = {instruction[31:25], instruction[11:7]};
-                rs1 = instruction[19:15];
-                func3 = instruction[14:12];
+                rs1       = instruction[19:15];
+                rs2       = instruction[24:20];  // <-- add rs2 decode
+                func3     = instruction[14:12];
             end
             
             default: begin

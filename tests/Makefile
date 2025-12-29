@@ -1,9 +1,9 @@
 SIM = verilator
 TOPLEVEL_LANG = verilog
 
-# Use CPU as the toplevel for the lw integration test
+# Use CPU as the toplevel for the sw integration test
 TOPLEVEL = cpu
-MODULE = lw
+MODULE = sw
 
 # All RTL sources needed by the toplevel
 VERILOG_SOURCES = \
