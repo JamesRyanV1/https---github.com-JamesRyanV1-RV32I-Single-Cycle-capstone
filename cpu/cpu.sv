@@ -113,6 +113,7 @@ dataMemory data_memory_inst (
 );
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // ALU for data memory adress calculation
 alu (
     .clk(clk)
@@ -126,6 +127,8 @@ alu (
     .last_bit
 )
 =======
+=======
+>>>>>>> b9e8ade2a854973ddec0436419768f4e07dc0613
 // ALU for data memory address calculation
 alu alu_inst (
     .clk(clk),
@@ -137,6 +140,9 @@ alu alu_inst (
     .zero(alu_zero),
     .last_bit(alu_last_bit)
 );
+<<<<<<< HEAD
+>>>>>>> b9e8ade2a854973ddec0436419768f4e07dc0613
+=======
 >>>>>>> b9e8ade2a854973ddec0436419768f4e07dc0613
 
 // Control unit
