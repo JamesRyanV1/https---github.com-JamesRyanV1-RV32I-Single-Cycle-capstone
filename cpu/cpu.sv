@@ -116,7 +116,7 @@ alu (
     .rst(rst)
     .cntrl(alu_op) // from control module, control must be modified further to support different functions per inst type
     .d1(regData1)
-    .d2(immediate)                      // MAKE THIS THE SIGN EXTENDED IMMEDIATE
+    .d2(immediate)                      // MAKE THIS THE SIGN EXTENDED IMMEDIATE 
 
     .alu_output(data_adress) // to data memory
     .zero                               // useless ports, I already know what zero is im sure the machine can do the same
