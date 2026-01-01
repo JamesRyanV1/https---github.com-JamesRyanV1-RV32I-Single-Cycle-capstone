@@ -27,6 +27,7 @@ always_comb begin
     alu_op = 4'b0000;
 
     case (op)
+    // memory store instruction
         7'b0100011: begin  // SW
             mem_write = 1'b1;
             mem_read = 1'b0;
@@ -35,14 +36,59 @@ always_comb begin
             imm_source = 3'b001;    // S-type
             alu_op = 4'b0000;       // add
         end
+        // memory load instruction
         7'b0000011: begin  // LW
             mem_write = 1'b0;
             mem_read = 1'b1;
             reg_write = 1'b1;
             alu_source = 1'b1;      // use immediate
-            imm_source = 3'b000;    // I-type
+            imm_source = 3'b000;    // I-type for memory loading
             alu_op = 4'b0000;       // add
         end
+        // R-type instructions (register to register arithmetic)
+        7'b0110011: begin
+            mem_write = 1'b0;
+            mem_read = 1'b0;
+            reg_write = 1'b1;
+            alu_source = 1'b0;      // use register
+            imm_source = 3'b000;    // not used
+            case ({func7, func3}) // COME BACK LATER TO HANDLE THIS, CODES MAY NOT BE CORRECT
+                10'b0000000000: alu_op = 4'b0000; // ADD
+                10'b0100000000: alu_op = 4'b0000; // SUB
+                10'b0000000111: alu_op = 4'b0100; // AND
+                10'b0000000110: alu_op = 4'b0101; // OR
+                10'b0000000100: alu_op = 4'b0110; // XOR
+                10'b0000000001: alu_op = 4'b0001; // SLL
+                10'b0000000101: alu_op = 4'b0010; // SRL
+                10'b0100000101: alu_op = 4'b0011; // SRA
+                default: alu_op = 4'b0000; // default to ADD
+            endcase
+        end
+        // I-type instructions (immediate to register arithmetic)
+        7'b0010011: begin
+            mem_write = 1'b0;
+            mem_read = 1'b0;
+            reg_write = 1'b1;
+            alu_source = 1'b1;      // use immediate
+            imm_source = 3'b000;    // I-type
+            case (func3)
+                3'b000: alu_op = 4'b0000; // ADDI
+                3'b111: alu_op = 4'b0100; // ANDI
+                3'b110: alu_op = 4'b0101; // ORI
+                3'b100: alu_op = 4'b0110; // XORI
+                3'b001: alu_op = 4'b0001; // SLLI
+                3'b101: begin
+                    if (func7 == 7'b0000000)
+                        alu_op = 4'b0010; // SRLI
+                    else if (func7 == 7'b0100000)
+                        alu_op = 4'b0011; // SRAI
+                    else
+                        alu_op = 4'b0000; // default to ADDI
+                end
+                default: alu_op = 4'b0000; // default to ADDI
+            endcase
+        end
+        
         default: ;
     endcase
 end

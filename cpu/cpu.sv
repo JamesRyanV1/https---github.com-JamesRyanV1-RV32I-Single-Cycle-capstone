@@ -4,6 +4,7 @@ module cpu (
     input  logic [31:0] instruction_in, // direct instruction feed for testing
 
     output logic [31:0] readd // observation signal for testing
+    output logic [31:0] alu_output // expose ALU output for testing
 );
 
 
@@ -26,36 +27,37 @@ decoder -> control
 
 
 // WIRES BETWEEN COMPONENTS NOT FROM INSTRUCTIONS
-logic [31:0] regData; // unused placeholder for future instructions
-logic [31:0] dData; // out from data memory, in to reg file
-logic [3:0]  alu_ctrl; // control word into ALU
-logic [31:0] data_address; // data address to be read (wire between the ALU out and the data memory)
-logic        reg_write; // 1 bit wire from control to registers
+logic [31:0] regData;        // unused placeholder for future instructions
+logic [31:0] dData;          // out from data memory, in to reg file
+logic [3:0]  alu_ctrl;       // control into ALU
+logic [31:0] data_address;   // data address to be read (wire between the ALU out and the data memory)
+logic        reg_write;      // 1 bit wire from control to registers
 logic [3:0]  inst_type;
-logic [2:0]  imm_type; // used only by the sign extender
+logic [2:0]  imm_type;       // used only by the sign extender
 logic [31:0] regData1;
 logic [31:0] regData2;
 logic        memRead;
 logic        memWrite;
 logic        alu_zero;
 logic        alu_last_bit;
-
+logic        alu_source;
+logic [31:0] alu_result; //USED LATER :)
 // WIRES DIRECTLY FROM INSTRUCTION
 logic [31:0] instruction;
-logic [4:0] rs1;
-logic [4:0] rs2;
+logic [4:0]  rs1;
+logic [4:0]  rs2;
 logic [31:0] immediate;
-logic [6:0] opcode;
-logic [2:0] func3;
-logic [6:0] func7;
-logic [4:0] rd;
-logic [4:0] reg_destination;
+logic [6:0]  opcode;
+logic [2:0]  func3;
+logic [6:0]  func7;
+logic [4:0]  rd;
+logic [4:0]  reg_destination;
 // NEW BUS DLC COMING SOON*tm*
 
 
 
 
-// initiats the program counter as a single register, then counts up (ignore this for the time being, I cant count a program if I cant add generally, this is a placeholder anyway)
+// initiats the program counter as a single register, then counts up (ignore this for the time being, I cant count a program if I cant add generally, this is a placeholder anyway, nvm?)
                     // reg [31:0] pc;
                     // logic [31:0] next_pc;
 
@@ -75,19 +77,8 @@ logic [4:0] reg_destination;
 
 
 
-// memory #(
-//     .mem_init("") // file path to ADD ONCE I HAVE A FILE  ignore this for now :)
-// ) instruction_memory (
-//     // Memory inputs
-//     .clk(clk), // Connects clk of each module to higher level speficied port (weird module hierarchy thing)
-//     .address(pc),
-//     .write_data(32'b0), // when nothing to connect to, im defining them as wires of the correct width
-//     .write_enable(1'b0),
-//     .rst_n(1'b1),
+// ADD INSTRUCTION MEMORY SOMHOW
 
-//     // Memory outputs
-//     .read_data(instruction)
-// );
 
 // Register File
 registerFile register_file_inst (
@@ -105,46 +96,28 @@ registerFile register_file_inst (
 // Data Memory
 dataMemory data_memory_inst (
     .clk(clk),
-    .address(data_address),
+    .address(alu_result), // SET ALU TO MATCH ONCE TESTING IS OVER
     .write_data(regData2),
     .write_enable(memWrite),
     .rst_data(rst),
     .read_data(dData)
 );
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-// ALU for data memory adress calculation
-alu (
-    .clk(clk)
-    .rst(rst)
-    .cntrl(alu_op) // from control module, control must be modified further to support different functions per inst type
-    .d1(regData1)
-    .d2(immediate)                      // MAKE THIS THE SIGN EXTENDED IMMEDIATE 
-
-    .alu_output(data_adress) // to data memory
-    .zero                               // useless ports, I already know what zero is im sure the machine can do the same
-    .last_bit
-)
-=======
-=======
->>>>>>> b9e8ade2a854973ddec0436419768f4e07dc0613
 // ALU for data memory address calculation
 alu alu_inst (
     .clk(clk),
     .rst(rst),
+    .alu_source(alu_source),
     .cntrl(alu_ctrl),
     .d1(regData1),
-    .d2(immediate),
-    .alu_output(data_address),
+    .immediate(immediate), // THIS WILL BE EITHER REGDATA2 OR IMMEDIATE BASED ON ALU SOURCE FROM CONTROL UNIT
+    .rs2(regData2),
+    .alu_output(alu_result), // THIS NEEDS TO GO SOMEWHERE, WAS DATA ADRESS FOR LW/SW, NOW IS ALU_OUTPUT PORT FOR TESTING
     .zero(alu_zero),
     .last_bit(alu_last_bit)
 );
-<<<<<<< HEAD
->>>>>>> b9e8ade2a854973ddec0436419768f4e07dc0613
-=======
->>>>>>> b9e8ade2a854973ddec0436419768f4e07dc0613
-
+// JUST FOR TESTING REMOVE LATER
+assign alu_result = alu_output; // expose alu output for testing
 // Control unit
 control control_inst (
     .op(opcode),
@@ -157,7 +130,7 @@ control control_inst (
     .mem_read(memRead),
     .mem_write(memWrite),
     .reg_write(reg_write),
-    .alu_source(),
+    .alu_source(alu_source),
     .pc_source(),
     .alu_op(alu_ctrl)
 );

@@ -10,8 +10,10 @@ module signExtender (
     always_comb begin
         ext_imm = 32'b0; // default
         case (imm_type)
-            3'b000: ext_imm = {{20{inst[31]}}, inst[31:20]}; // I-type
-            3'b001: ext_imm = {{20{inst[31]}}, inst[31:25], inst[11:7]}; // S-type (store)
+            3'b000: ext_imm = {{20{inst[31]}}, inst[31:20]}; // I-type immediate (Load, ALU I-type)
+            3'b001: ext_imm = {{20{inst[31]}}, inst[31:25], inst[11:7]}; // S-type immediate (Store)
+            3'b010: ext_imm = 32'b0; // R-type (no immediate needed)
+
             default: ext_imm = 32'b0;
         endcase
     end

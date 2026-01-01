@@ -30,8 +30,30 @@ module decoder (
         // alu_op removed; control drives ALU directly
 
         case (opcode)
+            7'b0110011: begin
+                inst_type = 4'b0011; // R-type instruction (register-register ALU)
+                imm_type = 3'b010;
+                
+                // R-type format: [func7(7)][rs2(5)][rs1(5)][func3(3)][rd(5)][opcode(7)]
+                rs1 = instruction[19:15];
+                rs2 = instruction[24:20];
+                rd = instruction[11:7];
+                func3 = instruction[14:12];
+                func7 = instruction[31:25];
+            end
+            7'b0010011: begin
+                inst_type = 4'b0100; // I-type instruction (register-immediate ALU)
+                imm_type = 3'b000;
+                
+                // I-type format: [imm[11:0](12)][rs1(5)][func3(3)][rd(5)][opcode(7)]
+                immediate = instruction[31:20];
+                rs1 = instruction[19:15];
+                rd = instruction[11:7];
+                func3 = instruction[14:12];
+                func7 = instruction[31:25]; // for shift immediates, func7 is in imm[11:5]
+            end
             7'b0000011: begin
-                inst_type = 4'b0001; // I type instruction
+                inst_type = 4'b0001; // I type instruction (Load)
                 imm_type = 3'b000;
                 
                 // I-type format
@@ -41,13 +63,13 @@ module decoder (
                 func3 = instruction[14:12];
             end
             7'b0100011: begin
-                inst_type = 4'b0010; // S type instruction
+                inst_type = 4'b0010; // S type instruction (Store)
                 imm_type  = 3'b001;
                 
                 // S-type format
                 immediate = {instruction[31:25], instruction[11:7]};
                 rs1       = instruction[19:15];
-                rs2       = instruction[24:20];  // <-- add rs2 decode
+                rs2       = instruction[24:20];  // add rs2 decode here
                 func3     = instruction[14:12];
             end
             
