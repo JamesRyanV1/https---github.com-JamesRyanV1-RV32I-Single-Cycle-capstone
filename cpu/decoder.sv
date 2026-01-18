@@ -19,11 +19,12 @@ module decoder (
     assign opcode = instruction[6:0];
 
     always_comb begin
-        // Default values
+        // Default values, because latch errors are not it
         inst_type = 4'b0000;
         imm_type = 3'b111;
         immediate = 12'b0;
         rs1 = 5'b0;
+        rs2 = 5'b0;
         rd = 5'b0;
         func3 = 3'b0;
         func7 = 7'b0;
@@ -61,6 +62,7 @@ module decoder (
                 rs1 = instruction[19:15];
                 rd = instruction[11:7];
                 func3 = instruction[14:12];
+                func7 = 7'b0;
             end
             7'b0100011: begin
                 inst_type = 4'b0010; // S type instruction (Store)
@@ -70,7 +72,9 @@ module decoder (
                 immediate = {instruction[31:25], instruction[11:7]};
                 rs1       = instruction[19:15];
                 rs2       = instruction[24:20];  // add rs2 decode here
+                rd        = 5'b0; // no rd in store
                 func3     = instruction[14:12];
+                func7     = 7'b0;
             end
             
             default: begin

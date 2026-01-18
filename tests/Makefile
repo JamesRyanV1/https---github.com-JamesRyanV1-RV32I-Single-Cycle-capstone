@@ -1,14 +1,17 @@
 SIM = verilator
 TOPLEVEL_LANG = verilog
 
-# Use CPU as the toplevel for the sw integration test
+# Use CPU as the toplevel for R/I-type ALU instruction integration tests
 TOPLEVEL = cpu
 MODULE = sw
 
-# All RTL sources needed by the toplevel
+# All RTL sources needed by the CPU
 VERILOG_SOURCES = \
   $(PWD)/../cpu/cpu.sv \
   $(PWD)/../cpu/alu.sv \
+  $(PWD)/../cpu/alu_adder.sv \
+  $(PWD)/../cpu/alu_shifter.sv \
+  $(PWD)/../cpu/alu_logic.sv \
   $(PWD)/../cpu/control.sv \
   $(PWD)/../cpu/dataMemory.sv \
   $(PWD)/../cpu/decoder.sv \

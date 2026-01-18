@@ -3,7 +3,7 @@ module cpu (
     input  wire        rst,
     input  logic [31:0] instruction_in, // direct instruction feed for testing
 
-    output logic [31:0] readd // observation signal for testing
+    output logic [31:0] readd, // observation signal for testing
     output logic [31:0] alu_output // expose ALU output for testing
 );
 
@@ -117,7 +117,7 @@ alu alu_inst (
     .last_bit(alu_last_bit)
 );
 // JUST FOR TESTING REMOVE LATER
-assign alu_result = alu_output; // expose alu output for testing
+//assign alu_result = alu_output; // expose alu output for testing
 // Control unit
 control control_inst (
     .op(opcode),

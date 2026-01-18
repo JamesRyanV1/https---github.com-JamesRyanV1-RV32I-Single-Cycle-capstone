@@ -106,6 +106,7 @@ async def run_r_type_op_alu(dut, op: str, func3: int, func7: int, iterations: in
     rs2 = 6
     rd = 7
     for _ in range(iterations):
+        await RisingEdge(dut.clk)
         a = random.getrandbits(32)
         b = random.getrandbits(32)
         dut.register_file_inst.regs[rs1].value = a
@@ -125,6 +126,7 @@ async def run_i_type_op_alu(dut, op_name: str, func3: int, func7: int | None, it
     rs1 = 8
     rd = 9
     for _ in range(iterations):
+        await RisingEdge(dut.clk)
         a = random.getrandbits(32)
         dut.register_file_inst.regs[rs1].value = a
 
