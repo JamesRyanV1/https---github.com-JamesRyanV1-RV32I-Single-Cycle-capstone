@@ -25,6 +25,9 @@ async def registerFile(dut):
     dut.rs1.value = 0
     dut.rs2.value = 0
     dut.rd.value = 0
+    dut.register_source.value = 0
+    dut.alu_result.value = 0
+    dut.pc_plus_4.value = 0
     dut.wd.value = 0
     dut.enableWrite.value = 0
     
@@ -42,14 +45,22 @@ async def registerFile(dut):
         rs1_addr = rd.randint(0, 31)
         rs2_addr = rd.randint(0, 31)
         rd_addr = rd.randint(1, 31)  # Don't write to 0
-        write_data = rd.randint(0, 0xFFFFFFFF)
+        alu_source = rd.choice([0, 1, 2, 3])  # 00: mem, 01: alu, 10: pc+4, 11: default->mem
+        mem_data = rd.randint(0, 0xFFFFFFFF)
+        alu_data = rd.randint(0, 0xFFFFFFFF)
+        pc4_data = rd.randint(0, 0xFFFFFFFF)
+        # mirrors DUT mux selection
+        write_data = {0: mem_data, 1: alu_data, 2: pc4_data}.get(alu_source, mem_data)
         enable_write = rd.choice([0, 1])
         
         # Set inputs
         dut.rs1.value = rs1_addr
         dut.rs2.value = rs2_addr
         dut.rd.value = rd_addr
-        dut.wd.value = write_data
+        dut.register_source.value = alu_source
+        dut.alu_result.value = alu_data
+        dut.pc_plus_4.value = pc4_data
+        dut.wd.value = mem_data
         dut.enableWrite.value = enable_write
         
         # Wait for combinational reads to settle
@@ -59,10 +70,10 @@ async def registerFile(dut):
         expected_rd1 = register_model[rs1_addr]
         expected_rd2 = register_model[rs2_addr]
         
-        assert dut.rd1.value == expected_rd1, \
-            f"Register read failed at rs1={rs1_addr}: got {dut.rd1.value:#010x}, expected {expected_rd1:#010x}"
-        assert dut.rd2.value == expected_rd2, \
-            f"Register read failed at rs2={rs2_addr}: got {dut.rd2.value:#010x}, expected {expected_rd2:#010x}"
+        assert int(dut.rd1.value) == expected_rd1, \
+            f"Register read failed at rs1={rs1_addr}: got {int(dut.rd1.value):#010x}, expected {expected_rd1:#010x}"
+        assert int(dut.rd2.value) == expected_rd2, \
+            f"Register read failed at rs2={rs2_addr}: got {int(dut.rd2.value):#010x}, expected {expected_rd2:#010x}"
         
         # Wait for clock edge (write happens on clock edge)
         await RisingEdge(dut.clk)
@@ -74,6 +85,8 @@ async def registerFile(dut):
     dut.rs1.value = 0
     dut.rs2.value = 0
     dut.rd.value = 0
+    dut.register_source.value = 1
+    dut.alu_result.value = 0xDEADBEEF
     dut.wd.value = 0xDEADBEEF  # Try to write this to register 0
     dut.enableWrite.value = 1
     

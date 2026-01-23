@@ -1,6 +1,7 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1768749744" />
-    <testcase name="test_sw_basic" classname="sw" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/tests/sw.py" lineno="18" time="0.0014324188232421875" sim_time_ns="50.001" ratio_time="34906.69013049267" />
+    <property name="random_seed" value="1769179214" />
+    <testcase name="short_program" classname="shortProgram" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/tests/shortProgram.py" lineno="41" time="0.0004994869232177734" sim_time_ns="40.0" ratio_time="80082.17661097852" />
+    <testcase name="add_untill_over_100_store_iterations" classname="shortProgram" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/tests/shortProgram.py" lineno="72" time="0.0004715919494628906" sim_time_ns="280.0" ratio_time="593733.6299292215" />
   </testsuite>
 </testsuites>

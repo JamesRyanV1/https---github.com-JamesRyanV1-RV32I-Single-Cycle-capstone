@@ -1,29 +1,31 @@
 module control (
     input logic [6:0] op,
     input logic [2:0] func3,
-    input logic [6:0] func7, // for use later
+    input logic [6:0] func7,
     input logic alu_zero,
     input logic alu_last_bit,
 
+    output logic [1:0] register_source,
     output logic [3:0] alu_control,
     output logic [2:0] imm_source,
     output logic mem_read,
     output logic mem_write,
     output logic reg_write,
     output logic alu_source,
-    output logic pc_source,
+    output logic [2:0] pc_source,
     output logic [3:0] alu_op
 );
 
 always_comb begin
     // Default all outputs to 0
+    register_source = 2'b0;
     alu_control = 4'b0000;
     imm_source = 3'b000;
     mem_read = 1'b0;
     mem_write = 1'b0;
     reg_write = 1'b0;
     alu_source = 1'b0;
-    pc_source = 1'b0;
+    pc_source = 3'b000;
     alu_op = 4'b0000;
 
     case (op)
@@ -38,6 +40,7 @@ always_comb begin
         end
         // memory load instruction
         7'b0000011: begin  // LW
+            register_source = 2'b00; // from data memory
             mem_write = 1'b0;
             mem_read = 1'b1;
             reg_write = 1'b1;
@@ -47,6 +50,7 @@ always_comb begin
         end
         // R-type instructions (register to register arithmetic)
         7'b0110011: begin
+            register_source = 2'b01; // from alu result
             mem_write = 1'b0;
             mem_read = 1'b0;
             reg_write = 1'b1;
@@ -66,6 +70,7 @@ always_comb begin
         end
         // I-type instructions (immediate to register arithmetic)
         7'b0010011: begin
+            register_source = 2'b01; // from alu result
             mem_write = 1'b0;
             mem_read = 1'b0;
             reg_write = 1'b1;
@@ -86,6 +91,22 @@ always_comb begin
                         alu_op = 4'b0000; // default to ADDI
                 end
                 default: alu_op = 4'b0000; // default to ADDI
+            endcase
+        end
+        // branch instructions
+        7'b1100011: begin
+            mem_write = 1'b0;
+            mem_read = 1'b0;
+            reg_write = 1'b0;
+            alu_source = 1'b0;      // use register
+            imm_source = 3'b011;    // B-type
+            alu_op = 4'b1000;       // branch operation (handled in branch unit)
+            case (func3) // works with branch unit, should rename but I wont
+                3'b000: pc_source = 3'b001;          // BEQ
+                3'b001: pc_source = 3'b010;          // BNE
+                3'b100: pc_source = 3'b011;          // BLT
+                3'b101: pc_source = 3'b100;          // BGE
+                default: pc_source = 3'b000;           // default no branch
             endcase
         end
         

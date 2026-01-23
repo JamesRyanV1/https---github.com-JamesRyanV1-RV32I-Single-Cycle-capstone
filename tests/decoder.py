@@ -5,22 +5,22 @@ import random as rd
 
 @cocotb.test()
 async def decoder_test(dut):
-    """test for the 32 bit instruction decoder (I-type only, opcode 0b0000001)"""
+    """test for the 32 bit instruction decoder (I-type load, opcode 0b0000011)"""
     cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
 
     # drive reset low after one cycle
     await RisingEdge(dut.clk)
     dut.rst.value = 0
 
-    # random I-type instruction with opcode forced to 0b0000001
+    # random I-type instruction with opcode forced to 0b0000011 (LOAD)
     inst = rd.randint(0, 0xFFFFFFFF)
-    inst = (inst & ~0x7F) | 0b0000001  # force opcode bits [6:0]
+    inst = (inst & ~0x7F) | 0b0000011  # force opcode bits [6:0]
 
     dut.instruction.value = inst
     await RisingEdge(dut.clk)
     await ReadOnly()
 
-    # expected fields per decoder.sv for opcode 0b0000001 (I-type)
+    # expected fields per decoder.sv for opcode 0b0000011 (I-type load)
     expected_inst_type = 1              # 4'b0001
     expected_imm_type = 0               # 3'b000
     expected_immediate = (inst >> 20) & 0xFFF   # bits [31:20]

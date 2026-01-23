@@ -71,6 +71,15 @@ module alu (
             4'b0100: alu_output = logic_result; // AND
             4'b0101: alu_output = logic_result; // OR
             4'b0110: alu_output = logic_result; // XOR
+            
+            // slt
+            4'b0111: begin
+                if ($signed(d1) < $signed(d2)) begin
+                    alu_output = 32'b1;
+                end else begin
+                    alu_output = 32'b0;
+                end
+            end
 
             default: alu_output = 32'b0; // default case
         endcase

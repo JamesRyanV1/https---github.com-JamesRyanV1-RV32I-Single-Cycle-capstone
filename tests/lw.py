@@ -21,7 +21,7 @@ async def test_lw_basic(dut):
 
 	# Reset
 	dut.rst.value = 1
-	dut.instruction_in.value = 0
+	dut.instruction.value = 0
 	await RisingEdge(dut.clk)
 	await RisingEdge(dut.clk)
 	dut.rst.value = 0
@@ -40,7 +40,7 @@ async def test_lw_basic(dut):
 	dut.data_memory_inst.mem[word_index].value = mem_data
 
 	# Drive lw instruction
-	dut.instruction_in.value = encode_lw(dest_reg, base_reg, imm)
+	dut.instruction.value = encode_lw(dest_reg, base_reg, imm)
 
 	# Execute: wait for combinational path to settle
 	await RisingEdge(dut.clk)   # instruction executes
@@ -52,11 +52,11 @@ async def test_lw_basic(dut):
 	mem_addr = int(dut.data_memory_inst.address.value)
 	mem_word_idx = mem_addr >> 2
 	mem_contents = int(dut.data_memory_inst.mem[mem_word_idx].value)
-	readd_val = int(dut.readd.value)
+	readd_val = int(dut.dData.value)
 
 	print(f"DEBUG: mem_addr = {mem_addr:08x}, word_idx = {mem_word_idx}")
 	print(f"DEBUG: mem[{mem_word_idx}] = {mem_contents:08x}")
-	print(f"DEBUG: readd (output) = {readd_val:08x}")
+	print(f"DEBUG: dData (output) = {readd_val:08x}")
 
 	# Now assert after debug output
 	assert readd_val == mem_data, f"Data memory read should match expected value: got {readd_val:08x}, expected {mem_data:08x}"
@@ -73,7 +73,7 @@ async def test_lw_basic(dut):
 	mem_addr = int(dut.data_memory_inst.address.value)
 	mem_word_idx = mem_addr >> 2
 	mem_contents = int(dut.data_memory_inst.mem[mem_word_idx].value)
-	readd_val = int(dut.readd.value)
+	readd_val = int(dut.dData.value)
 
 	print(f"DEBUG: mem_addr = {mem_addr:08x}, word_idx = {mem_word_idx}")
 	print(f"DEBUG: mem[{mem_word_idx}] = {mem_contents:08x}")

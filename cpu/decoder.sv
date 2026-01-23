@@ -77,6 +77,23 @@ module decoder (
                 func7     = 7'b0;
             end
             
+            // B type, Jtype
+            7'b1100011: begin
+                inst_type = 4'b0101; // B type 
+                imm_type  = 3'b011; // also
+                
+                // B-type format
+                immediate = {instruction[31], instruction[7], instruction[30:25], instruction[11:8]};
+                rs1       = instruction[19:15];
+                rs2       = instruction[24:20];
+                rd        = 5'b0; // no rd in branch
+                func3     = instruction[14:12];
+                func7     = 7'b0;
+            end
+            7'b1101111: begin
+                inst_type = 4'b0110; // J type instruction (JAL)
+                imm_type  = 3'b100;
+            end
             default: begin
                 // Keeps default values
             end
