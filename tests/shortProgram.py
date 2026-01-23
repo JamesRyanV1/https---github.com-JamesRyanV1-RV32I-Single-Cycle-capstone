@@ -43,7 +43,7 @@ async def short_program(dut):
     """Test a short program that loads a value from memory, adds an immediate, and stores the result back."""
     cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
 
-    # Reset DUT
+    # Reset DUTShould the branch instruction loop back to
     dut.rst.value = 1
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
