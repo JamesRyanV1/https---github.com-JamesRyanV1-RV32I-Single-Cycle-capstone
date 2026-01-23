@@ -27,4 +27,7 @@ def compile_L_type(rd, rs1, imm):
     opcode = 0b0000011
     func3 = 0b010
     return compile_I_type(opcode, rd, func3, rs1, imm)
-
+def compile_jal(rd, imm):
+    """Compile a jal instruction."""
+    opcode = 0b1101111
+    return compile_I_type(opcode, rd, 0, 0, imm)  # func3 and rs1 are not used in JAL

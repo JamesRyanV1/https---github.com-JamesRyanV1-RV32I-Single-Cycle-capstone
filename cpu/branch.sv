@@ -54,6 +54,7 @@ module branch_unit (
                 end
             
                 default: take_branch = 1'b0; // default case, no branch
+                3'b101: take_branch = 1'b1; // JAL handled in pc and register file
             endcase
         end
         end

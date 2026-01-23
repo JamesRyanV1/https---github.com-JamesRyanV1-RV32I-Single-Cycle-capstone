@@ -4,7 +4,7 @@ module pc (
     input  logic        clk,
     input  logic        rst,
     input  logic        branch, // control signal to indicate branch taken 
-    input  logic [31:0] offset, // 32 bit offset for branch instructions, tragically sign-extended
+    input  logic [31:0] offset, // 32 bit offset for branch instructions or jal
     output logic [31:0] pc_out
 );
 

@@ -56,7 +56,7 @@ always_comb begin
             reg_write = 1'b1;
             alu_source = 1'b0;      // use register
             imm_source = 3'b000;    // not used
-            case ({func7, func3}) // COME BACK LATER TO HANDLE THIS, CODES MAY NOT BE CORRECT
+            case ({func7, func3})
                 10'b0000000000: alu_op = 4'b0000; // ADD
                 10'b0100000000: alu_op = 4'b0000; // SUB
                 10'b0000000111: alu_op = 4'b0100; // AND
@@ -101,13 +101,22 @@ always_comb begin
             alu_source = 1'b0;      // use register
             imm_source = 3'b011;    // B-type
             alu_op = 4'b1000;       // branch operation (handled in branch unit)
-            case (func3) // works with branch unit, should rename but I wont
+            case (func3) // works with branch unit, should rename pc_source to be accurate
                 3'b000: pc_source = 3'b001;          // BEQ
                 3'b001: pc_source = 3'b010;          // BNE
                 3'b100: pc_source = 3'b011;          // BLT
                 3'b101: pc_source = 3'b100;          // BGE
                 default: pc_source = 3'b000;           // default no branch
             endcase
+        end
+        7'b1101111 : begin  // JAL
+            register_source = 2'b10; // from pc + 4
+            mem_write = 1'b0;
+            mem_read = 1'b0;
+            reg_write = 1'b1;
+            alu_source = 1'b0;      // not used
+            imm_source = 3'b100;    // J-type
+            pc_source = 3'b101;     // jump to target
         end
         
         default: ;
