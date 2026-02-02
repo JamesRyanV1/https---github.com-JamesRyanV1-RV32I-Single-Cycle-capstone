@@ -13,7 +13,8 @@ module control (
     output logic reg_write,
     output logic alu_source,
     output logic [2:0] pc_source,
-    output logic [3:0] alu_op
+    output logic [3:0] alu_op,
+    output logic       jalr_override
 );
 
 always_comb begin
@@ -27,6 +28,7 @@ always_comb begin
     alu_source = 1'b0;
     pc_source = 3'b000;
     alu_op = 4'b0000;
+    jalr_override = 1'b0;
 
     case (op)
     // memory store instruction
@@ -117,6 +119,16 @@ always_comb begin
             alu_source = 1'b0;      // not used
             imm_source = 3'b100;    // J-type
             pc_source = 3'b101;     // jump to target
+        end
+        7'b1100111: begin // JALR
+            register_source = 2'b10; // from pc + 4
+            mem_write = 1'b0;
+            mem_read = 1'b0;
+            reg_write = 1'b1;
+            alu_source = 1'b1;      // use immediate
+            imm_source = 3'b000;    // I-type
+            pc_source = 3'b110;     // jump to target
+            jalr_override = 1'b1;   // signal to override pc for jalr
         end
         
         default: ;
