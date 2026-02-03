@@ -103,11 +103,11 @@ module decoder (
             end
             7'b1100111: begin // JALR
                 // inst_type is not real
-                imm_type = 3'b000 // sign extends like I type, because it is I type with weird opcode
-                immediate = instruction[31:20]
-                rs1 = [11:7]
-                func7 = 7'b0
-                func3 = 3'b0
+                imm_type = 3'b000; // sign extends like I type, because it is I type with weird opcode
+                immediate = instruction[31:20];
+                rs1 = instruction[11:7];
+                func7 = 7'b0;
+                func3 = 3'b0;
             end
             default: begin
                 // Keeps default values
