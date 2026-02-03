@@ -118,7 +118,7 @@ registerFile register_file_inst (
 // Data Memory
 dataMemory data_memory_inst (
     .clk(clk),
-    .address(alu_result), // SET ALU TO MATCH ONCE TESTING IS OVER
+    .address(alu_result),
     .write_data(regData2),
     .write_enable(memWrite),
     .rst_data(rst),
