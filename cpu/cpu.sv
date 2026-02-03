@@ -99,6 +99,8 @@ pc pc_inst (
     .branch(take_branch), // branch control signal from control unit, not implemented yet
     .offset(immediate), // for branch instructions, comes from sign extender 
     .override(override), // override for jalr instruction
+    .rs1(regData1), // rs1 value for JALR
+    .jalr_imm(immediate), // immediate for JALR (sign extended)
     .pc_out(pc_next)
 );
 // Register File
