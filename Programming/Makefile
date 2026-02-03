@@ -1,11 +1,11 @@
 SIM = verilator
 TOPLEVEL_LANG = verilog
 
-# CPU top level, checks blt loop 
+# CPU top-level and BEQ integration test
 TOPLEVEL = cpu
 MODULE = loops
 
-# rtl sources required for CPU
+# RTL sources required for CPU
 VERILOG_SOURCES = \
 	$(PWD)/../cpu/alu_adder.sv \
 	$(PWD)/../cpu/alu_logic.sv \

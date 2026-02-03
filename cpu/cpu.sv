@@ -60,6 +60,7 @@ logic [4:0]  reg_destination;   // destination register for register file
 // NEW BUS DLC COMING SOON*tm*
 logic [31:0] pc_next;        // output from pc to instruction memory mostly, or ALUIPC, (might not even use aluipc)
 logic [1:0]  register_source; // from control to register file
+logic        override;       // override signal for jalr to pc
 
 
 
@@ -97,6 +98,7 @@ pc pc_inst (
     .rst(rst),
     .branch(take_branch), // branch control signal from control unit, not implemented yet
     .offset(immediate), // for branch instructions, comes from sign extender 
+    .override(override), // override for jalr instruction
     .pc_out(pc_next)
 );
 // Register File
@@ -148,14 +150,15 @@ control control_inst (
     .alu_zero(alu_zero),
     .alu_last_bit(alu_last_bit),
     .register_source(register_source),
-    .alu_control(),
-    .imm_source(),
+    .alu_control(), // USELESS
+    .imm_source(),  // USELESS
     .mem_read(memRead),
     .mem_write(memWrite),
     .reg_write(reg_write),
     .alu_source(alu_source),
     .pc_source(pc_source),
-    .alu_op(alu_ctrl)
+    .alu_op(alu_ctrl),
+    .jalr_override(override)
 );
 
 // Sign extender
@@ -172,7 +175,7 @@ decoder decoder_inst (
     .clk(clk),
     .rst(rst),
     .instruction(instruction),
-    .inst_type(inst_type),
+    .inst_type(inst_type), // USELESS
     .rd(reg_destination),
     .rs1(rs1),
     .rs2(rs2),
