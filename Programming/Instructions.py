@@ -152,10 +152,20 @@ def jal(rd: int, imm: int) -> int:
     :param imm: Immediate value (jump offset)
     :return: 32-bit binary representation of the JAL instruction
     """
-    return _encode_j_type(rd, imm, opcode=OP_JAL)
+    return _encode_j_type(rd, imm, opcode=0b1101111)
+def jalr(rd: int, imm: int) -> int:
+    """
+    Compile a JAL instruction.
+
+    :param rd: Destination register (0-31)
+    :param imm: Immediate value (jump offset)
+    :return: 32-bit binary representation of the JAL instruction
+    """
+    return _encode_i_type(rd, imm, opcode= 0b1100111) # MAY NOT WORK RN FOR JALR
 
 def makeList(* instructions) -> list[int]:
     """
     Create a list of instructions, taking however many correctly called instruction functions as arguments.
     """
     return list(instructions) + [0]  # Append a 0 to signify end of program
+    # this list is used in runInstructions.py, stopping at 0 instead of a propper estop instruction
