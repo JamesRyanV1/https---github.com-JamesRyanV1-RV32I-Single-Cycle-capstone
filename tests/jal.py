@@ -24,7 +24,7 @@ async def jal(dut):
     rd = 5  # Destination register
     imm = 16  # Jump offset
     jal_instruction = compile_jal(rd, imm)
-    dut.instruction_memory_inst.memory[0].value = jal_instruction
+    dut.instruction_memory_inst.mem[0].value = jal_instruction
     await RisingEdge(dut.clk) # instruction processed
 
     # Assert that register 5 contains the return address (PC + 4)

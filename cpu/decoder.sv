@@ -11,7 +11,7 @@ module decoder (
     output logic [6:0] func7,
     output logic [2:0] imm_type, // used by the sign extender
     output logic [6:0] opcode,
-    output logic [11:0] immediate
+    output logic [19:0] immediate
      
     // Mem read and write are handled by the control, not important here.
 );
@@ -22,7 +22,7 @@ module decoder (
         // Default values, because latch errors are not it
         inst_type = 4'b0000;
         imm_type = 3'b111;
-        immediate = 12'b0;
+        immediate = 20'b0;
         rs1 = 5'b0;
         rs2 = 5'b0;
         rd = 5'b0;
@@ -47,7 +47,7 @@ module decoder (
                 imm_type = 3'b000;
                 
                 // I-type format: [imm[11:0](12)][rs1(5)][func3(3)][rd(5)][opcode(7)]
-                immediate = instruction[31:20];
+                immediate = {8'b0, instruction[31:20]};
                 rs1 = instruction[19:15];
                 rd = instruction[11:7];
                 func3 = instruction[14:12];
@@ -58,7 +58,7 @@ module decoder (
                 imm_type = 3'b000;
                 
                 // I-type format
-                immediate = instruction[31:20];
+                immediate = {8'b0, instruction[31:20]};
                 rs1 = instruction[19:15];
                 rd = instruction[11:7];
                 func3 = instruction[14:12];
@@ -69,7 +69,7 @@ module decoder (
                 imm_type  = 3'b001;
                 
                 // S-type format
-                immediate = {instruction[31:25], instruction[11:7]};
+                immediate = {8'b0, instruction[31:25], instruction[11:7]};
                 rs1       = instruction[19:15];
                 rs2       = instruction[24:20];  // add rs2 decode here
                 rd        = 5'b0; // no rd in store
@@ -83,7 +83,7 @@ module decoder (
                 imm_type  = 3'b011; // also
                 
                 // B-type format
-                immediate = {instruction[31], instruction[7], instruction[30:25], instruction[11:8]};
+                immediate = {8'b0, instruction[31], instruction[7], instruction[30:25], instruction[11:8]};
                 rs1       = instruction[19:15];
                 rs2       = instruction[24:20];
                 rd        = 5'b0; // no rd in branch
@@ -102,12 +102,14 @@ module decoder (
                 func7     = 7'b0;
             end
             7'b1100111: begin // JALR
-                // inst_type is not real
-                imm_type = 3'b000 // sign extends like I type, because it is I type with weird opcode
-                immediate = instruction[31:20]
-                rs1 = [11:7]
-                func7 = 7'b0
-                func3 = 3'b0
+                inst_type = 4'b0111; // I type instruction (JALR)
+                imm_type = 3'b000; // sign extends like I type, because it is I type with weird opcode
+                immediate = {8'b0, instruction[31:20]}; // 12 bit immediate padded to 20 bits
+                rd = instruction[11:7]; // destination register
+                rs1 = instruction[19:15]; // source register (base address)
+                rs2 = 5'b0;
+                func3 = 3'b0;
+                func7 = 7'b0;
             end
             default: begin
                 // Keeps default values

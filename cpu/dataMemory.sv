@@ -1,5 +1,6 @@
 module dataMemory #(
-    parameter WORDS = 64 // Supports bigger if needed
+    parameter WORDS = (1 << 24) // 2^31 words, change shift if I want more
+    // THE SIM COULD NOT HANDLE 2^31 WORDS, KEEP IT HERE for testing
 ) (
     input logic clk,
     input logic [31:0] address,

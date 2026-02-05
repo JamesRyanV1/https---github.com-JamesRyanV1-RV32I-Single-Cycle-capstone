@@ -124,7 +124,7 @@ always_comb begin
             register_source = 2'b10; // from pc + 4
             mem_write = 1'b0;
             mem_read = 1'b0;
-            reg_write = 1'b1;
+            reg_write = 1'b1;       // if its end of programmed stack, instead of link set rd to x0
             alu_source = 1'b1;      // use immediate
             imm_source = 3'b000;    // I-type
             pc_source = 3'b110;     // jump to target
