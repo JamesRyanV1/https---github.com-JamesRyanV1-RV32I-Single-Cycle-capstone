@@ -1,7 +1,19 @@
 import Instructions as i
+import HelperPrograms as hp
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, ReadOnly
+
+# IMPORTANT THINGS
+# x31 is the input register,
+# x30 will be the output register,
+# x0 is the zero register,
+# x8-12 are reserved for snake board handling in the snake game
+# x1 is the stack pointer
+# x2 is the return adress
+# x3 is the global pointer if needed, not for snake game
+
+
 
 arr = i.makeList() # input instructions here in i.instruction(), i.instruction, format
 @cocotb.test()
@@ -14,8 +26,10 @@ async def run_instructions(dut):
         dut.rst.value = 0
         
     await reset_dut()
-
+    
     # loads instruction memory with the given program
+    # make arr, run snake
+
     for i in range(len(arr)):
         dut.instruction_memory_inst.memory[i*4].value = arr[i]  # Load instruction into instruction memory
     # ALSO PRELOAD REGISTERS AND NEEDED MEMORY DURING THIS CLOCK CYCLE 

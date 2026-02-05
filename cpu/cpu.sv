@@ -4,10 +4,18 @@
 module cpu (
     input  wire        clk,
     input  wire        rst,
+    input  logic [31:0] input_data, // inputs from other devices, goes straight to x30 (input register)
     // input  logic [31:0] instruction_in, // direct instruction feed for testing
 
-    // any outputs for testing go here if needed.
-    output logic [31:0] cpu_out
+    /*
+    output will be used for graphics and whatnot
+    will pass out a special value to start a frame, then hex values for each pixel 
+    in a contigous block as programmed by me. the first two values will 
+    be width and height of the frame, pixel data will follow untill that is exausted,
+    wait for next frame signal.
+    */
+    output logic [31:0] cpu_out // this will be for graphics output. Will be linked to x31 (output register
+
     );
 
 
