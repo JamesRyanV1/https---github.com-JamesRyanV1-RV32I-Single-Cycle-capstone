@@ -4,6 +4,8 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, ReadOnly
 
+import sys
+import select
 # IMPORTANT THINGS
 # x31 is the input register,
 # x30 will be the output register,
@@ -12,9 +14,33 @@ from cocotb.triggers import RisingEdge, ReadOnly
 # x1 is the stack pointer
 # x2 is the return adress
 # x3 is the global pointer if needed, not for snake game
+# x4 is the current val
+
+def key_pressed():
+    if sys.platform.startswith("win"):
+        import msvcrt
+        if not msvcrt.kbhit():
+            return None
+        key = msvcrt.getch()
+        if key in (b"\x00", b"\xe0"):
+            key = msvcrt.getch()
+        return key[0]
+    if not hasattr(sys.stdin, "fileno") or not sys.stdin.isatty():
+        return None
+    ready = select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
+    if not ready:
+        return None
+    return ord(sys.stdin.read(1))
 
 
-
+# remove if running the actual testbench
+if __name__ == "__main__": 
+    while True:
+        key_value = key_pressed()
+        if key_value is not None:
+            print(f"Key pressed: {key_value}")
+        else:
+            pass
 arr = i.makeList() # input instructions here in i.instruction(), i.instruction, format
 @cocotb.test()
 async def run_instructions(dut):
@@ -26,7 +52,7 @@ async def run_instructions(dut):
         dut.rst.value = 0
         
     await reset_dut()
-    
+
     # loads instruction memory with the given program
     # make arr, run snake
 
@@ -36,6 +62,8 @@ async def run_instructions(dut):
     
     # Run the instructions ASSUMES THERE IS AN ESTOP OR SMTN THAT STOPS IT, I HAVNT IMPLIMENTED THIS YET BUT IT JS WORKS IN TB
     while arr(dut.pc.value // 4) != 0:
+        key_value = key_pressed()
+        dut.register_file_inst.registers[31].value = key_value if key_value is not None else 0
         await RisingEdge(dut.clk)
     
     assert True # change this assertion to something usefull depending on the program (last expected value for traceable programs, otherwise idk)

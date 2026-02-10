@@ -11,23 +11,23 @@ OP_JAL = 0b1101111
 
 
 def _encode_r_type(rd: int, rs1: int, rs2: int, func3: int, func7: int, opcode: int = OP_R_TYPE) -> int:
-    return ((func7 & 0x7F) << 25) | ((rs2 & 0x1F) << 20) | ((rs1 & 0x1F) << 15) | ((func3 & 0x7) << 12) | ((rd & 0x1F) << 7) | (opcode & 0x7F)
+    return format(((func7 & 0x7F) << 25) | ((rs2 & 0x1F) << 20) | ((rs1 & 0x1F) << 15) | ((func3 & 0x7) << 12) | ((rd & 0x1F) << 7) | (opcode & 0x7F),f'0{32}b')
 
 
 def _encode_i_type(rd: int, rs1: int, imm: int, func3: int, opcode: int = OP_I_TYPE) -> int:
     imm_11_0 = imm & 0xFFF
-    return (imm_11_0 << 20) | ((rs1 & 0x1F) << 15) | ((func3 & 0x7) << 12) | ((rd & 0x1F) << 7) | (opcode & 0x7F)
+    return format((imm_11_0 << 20) | ((rs1 & 0x1F) << 15) | ((func3 & 0x7) << 12) | ((rd & 0x1F) << 7) | (opcode & 0x7F),f'0{32}b')
 
 
 def _encode_i_type_shift(rd: int, rs1: int, shamt: int, func3: int, func7: int, opcode: int = OP_I_TYPE) -> int:
     imm_11_0 = ((func7 & 0x7F) << 5) | (shamt & 0x1F)
-    return (imm_11_0 << 20) | ((rs1 & 0x1F) << 15) | ((func3 & 0x7) << 12) | ((rd & 0x1F) << 7) | (opcode & 0x7F)
+    return format((imm_11_0 << 20) | ((rs1 & 0x1F) << 15) | ((func3 & 0x7) << 12) | ((rd & 0x1F) << 7) | (opcode & 0x7F),f'0{32}b')
 
 
 def _encode_s_type(rs1: int, rs2: int, imm: int, func3: int, opcode: int = OP_STORE) -> int:
     imm_11_5 = (imm >> 5) & 0x7F
     imm_4_0 = imm & 0x1F
-    return ((imm_11_5 << 25) | ((rs2 & 0x1F) << 20) | ((rs1 & 0x1F) << 15) | ((func3 & 0x7) << 12) | (imm_4_0 << 7) | (opcode & 0x7F))
+    return format(((imm_11_5 << 25) | ((rs2 & 0x1F) << 20) | ((rs1 & 0x1F) << 15) | ((func3 & 0x7) << 12) | (imm_4_0 << 7) | (opcode & 0x7F)),f'0{32}b')
 
 
 def _encode_b_type(rs1: int, rs2: int, imm: int, func3: int, opcode: int = OP_BRANCH) -> int:
@@ -35,7 +35,7 @@ def _encode_b_type(rs1: int, rs2: int, imm: int, func3: int, opcode: int = OP_BR
     imm_10_5 = (imm >> 5) & 0x3F
     imm_4_1 = (imm >> 1) & 0xF
     imm_11 = (imm >> 11) & 0x1
-    return (
+    return format(
         (imm_12 << 31)
         | (imm_10_5 << 25)
         | ((rs2 & 0x1F) << 20)
@@ -43,7 +43,8 @@ def _encode_b_type(rs1: int, rs2: int, imm: int, func3: int, opcode: int = OP_BR
         | ((func3 & 0x7) << 12)
         | (imm_4_1 << 8)
         | (imm_11 << 7)
-        | (opcode & 0x7F)
+        | (opcode & 0x7F),
+        f'0{32}b'
     )
 
 
@@ -52,7 +53,7 @@ def _encode_j_type(rd: int, imm: int, opcode: int = OP_JAL) -> int:
     imm_10_1 = (imm >> 1) & 0x3FF
     imm_11 = (imm >> 11) & 0x1
     imm_19_12 = (imm >> 12) & 0xFF
-    return (imm_20 << 31) | (imm_10_1 << 21) | (imm_11 << 20) | (imm_19_12 << 12) | ((rd & 0x1F) << 7) | (opcode & 0x7F)
+    return format((imm_20 << 31) | (imm_10_1 << 21) | (imm_11 << 20) | (imm_19_12 << 12) | ((rd & 0x1F) << 7) | (opcode & 0x7F),f'0{32}b')
 
 
 # R-type ALU instructions
@@ -153,7 +154,7 @@ def jal(rd: int, imm: int) -> int:
     :return: 32-bit binary representation of the JAL instruction
     """
     return _encode_j_type(rd, imm, opcode=0b1101111)
-def jalr(rd: int, imm: int) -> int:
+def jalr(rd: int, rs1: int) -> int:
     """
     Compile a JAL instruction.
 
@@ -161,11 +162,31 @@ def jalr(rd: int, imm: int) -> int:
     :param imm: Immediate value (jump offset)
     :return: 32-bit binary representation of the JAL instruction
     """
-    return _encode_i_type(rd, imm, opcode= 0b1100111) # MAY NOT WORK RN FOR JALR
+    return _encode_i_type(rd, rs1, 0, 0, opcode= 0b1100111) # MAY NOT WORK RN FOR JALR
 
 def makeList(* instructions) -> list[int]:
     """
     Create a list of instructions, taking however many correctly called instruction functions as arguments.
     """
-    return list(instructions) + [0]  # Append a 0 to signify end of program
+    return list(instructions)  # Append a 0 to signify end of program, removed for now
     # this list is used in runInstructions.py, stopping at 0 instead of a propper estop instruction
+
+# y = bin(addi(1,0,1))[2:]
+# x = 32 - len(y)
+# z = ((bin(0)[2:]*x) + y)
+# print(len(z), z)
+
+# temp = addr(1,0,1)
+# print(temp, len(temp))
+
+
+
+# snake subroutine, consists of a jump and link for each conditional.
+
+# start subroutine,
+# lw x4 into x5, 
+# beq 0, pass through untill end subroutine
+# blt 256 (max snake length)
+    # subi 1 from x5
+    # sw x5 val to x4 in memory
+# beq 0xfff (apple value)
