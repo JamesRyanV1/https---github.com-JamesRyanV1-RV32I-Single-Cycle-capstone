@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1771093467" />
+    <testcase name="run_instructions" classname="runInstructions" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/Programming/runInstructions.py" lineno="130" time="1.516291856765747" sim_time_ns="51801.0" ratio_time="34162.94809529058" />
+  </testsuite>
+</testsuites>

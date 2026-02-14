@@ -1,6 +1,8 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1770135252" />
-    <testcase name="loop" classname="loops" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/tests/loops.py" lineno="8" time="1.5876426696777344" sim_time_ns="1510.0" ratio_time="951.0956267675178" />
+    <property name="random_seed" value="1770987617" />
+    <testcase name="test_sw_basic" classname="sw" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/tests/sw.py" lineno="18" time="0.003329753875732422" sim_time_ns="0.0" ratio_time="0.0">
+      <failure error_type="AttributeError" error_msg="cpu contains no child object named instruction_in" />
+    </testcase>
   </testsuite>
 </testsuites>

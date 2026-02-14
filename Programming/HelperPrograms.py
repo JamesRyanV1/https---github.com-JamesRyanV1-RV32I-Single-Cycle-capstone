@@ -3,9 +3,10 @@ import Instructions as i
 
 
 # Runs at the start of a subroutine, I just put it somewhere far off in memory
-start_subroutine = i.makeList(i.addi(1,1,4), 
+start_subroutine = i.makeList(
+                              i.addi(1,1,4), 
                               i.sw(2,1,0))# change 0x1 in first bge, idk if sw works like it does
-# ends a subroutine by loading the teturn adress from the top of the stack, incrementing the stack pointer
+# ends a subroutine by loading the teturn adress from the top of the stack into x2, incrementing the stack pointer
 end_subroutine = i.makeList(i.lw(2,1,0),
                             i.addi(1,1,4))
 
@@ -29,18 +30,32 @@ def iterate_arr_type(sub, base_adress_adress: int, base_num_rows_adress: int, ba
     first = i.makeList(
         i.addi(11,0,0), # sets row count to 0
         i.addi(12,0,0), # sets column count to 0, may remove to save a register, and just do math
-        i.lw(4,0,0), # sets current adress to 0, may remove to save a register, and just do math
         i.lw(8,0,base_adress_adress), # loads base adress of the array into x8
+        # i.addi(8,0,5120),
+        i.addi(4,8,0), # sets current adress to base address, may remove to save a register, and just do math
+        # READ WHEN RUNNING make 3 contigous values saved in memory for ease of use
         i.lw(9,0,base_num_rows_adress), # loads number of rows into x9
         i.lw(10,0,base_num_cols_adress), # loads number of columns into x10
+        # i.addi(9,0,16), # loads number of rows into x9
+        # i.addi(10,0,16) # loads number of columns into x10
     )
-        # loop
+
+        # loop, the jump should store the word in the adress stored in x4
+    sub_len = len(sub)
+    # Branch back offsets (bytes). Jump to start of subroutine block.
+    col_loop_back = -4 * (sub_len + 3)  # from blt at instr #3 back to sub start
+    row_loop_back = -4 * (sub_len + 6)  # from blt at instr #6 back to sub start
+
     second = i.makeList(
-        # sub will jump back, so it doesnt effect the looping
-        i.addi(12,12,4), # increments column count, may need to be by 4 if this is just going straight to byte adressed mem
-        i.blt(12,10,-8), # if column count < columns, jump back 2, to the subroutine
-        i.addi(11,11,4), # increments row count
-        i.blt(11,9,-12), # if row count < rows, jump back 3, to the start of the loop
+        # increment x4 by 4 to point to the next element.
+        i.addi(4,4,4), # increments current adress by 4, may need to be by 4 if this is just going straight to byte adressed mem
+        i.addi(12,12,1), # increments column count by 1
+        i.blt(12,10,col_loop_back), # if column count < columns, jump back to subroutine
+        i.addi(11,11,1), # increments row count by 1
+        i.addi(12,0,0), # reset column count
+        i.blt(11,9,row_loop_back), # if row count < rows, jump back to subroutine
+        # zeros x4 to be the base adress once loop is done
+        i.addi(4,8,0)
 
         
         )
@@ -136,35 +151,55 @@ def test_xorshift32_masked(value: int) -> tuple[int, int]:
 
 
 # print(f"Unique masked outputs: {len(collect_xorshift32_masked(0x12345678, 10000))} out of 256")
-def xorshift32_random_in_256_range() -> list[int]:
+def xorshift32_random_in_256_range_body() -> list[int]:
     """
-    Returns a subroutine that runs a 32-bit xorshift and masks to 0-255.
-    The new 32-bit state is left in x20, and the masked output is in x30.
+    Returns the xorshift32 body instructions (no prologue/epilogue).
+    The new 32-bit state is left in x30, and the masked output is in x31.
     """
     body = i.makeList(
-        i.addi(20,31,0),
-        i.addi(21,20,0),
-        i.slli(21,21,13),
-        i.xorr(20,20,21),
-        i.addi(21,20,0),
-        i.srli(21,21,17),
-        i.xorr(20,20,21),
-        i.addi(21,20,0),
-        i.slli(21,21,5),
-        i.xorr(20,20,21),
-        i.andi(21,20,0xFF),
-        i.addi(30,21,0),
+        # If x30 is 0, initialize it with a non-zero seed to avoid the zero-trap
+        i.addi(21,30,0),  # copy x30 to x21
+        i.addi(20,0,0xA5A), # load a non-zero constant seed (0xA5A) into x20
+        i.beq(21,0,8),    # if x30 is zero, skip to seed initialization (2 instructions ahead)
+        i.addi(20,30,0),  # x30 is non-zero, use it as seed
+        i.beq(0,0,8),     # skip seed initialization (jump 2 instructions)
+        # Seed initialization (only runs if x30 was 0):
+        i.xorr(20,1,20),  # XOR stack pointer (x1) with constant for better seed
         
-        # stores the randomish shifted number (30), to the memory address in x4, where the current location is being stored
-        i.sw(4,30,0) 
+        # Now x20 has a guaranteed non-zero value, run xorshift32
+        i.addi(21,20,0), # copy x20 to x21 
+        i.slli(21,21,13), # shift x21 left 13
+        i.xorr(20,20,21), # xor x20 with x21 to x20
+        i.addi(21,20,0), # copy x20 to x21
+        i.srli(21,21,17), # shift x21 right 17
+        i.xorr(20,20,21), # xor x20 with x21 to x20
+        i.addi(21,20,0), # copy x20 to x21
+        i.slli(21,21,5), # shift x21 left 5
+        i.xorr(20,20,21), # xor x20 with x21 to x20
+        i.andi(21,20,0xFF), # and x20 with 255 to get a number 0-255 in x21
+        i.addi(30,20,0), # copy FULL 32-bit state to x30 for next iteration (NOT the masked value!)
+        i.addi(31,21,0), # copy masked result (0-255) to x31 for output
+        
+        # stores the masked random value (x31) to the memory address in x4
+        i.sw(4,31,0)
+        # No jalr here - execution falls through to the loop control (second) which branches back
+        
     )
+    return body
 
+def xorshift32_random_in_256_range() -> list[int]:
+    """
+    Returns a full subroutine that runs a 32-bit xorshift and masks to 0-255.
+    """
+    body = xorshift32_random_in_256_range_body()
     return start_subroutine + body + end_subroutine
 
-x = iterate_arr_type(xorshift32_random_in_256_range(),2 << 14 ,16,16)
-z = iterate_arr_type(i.makeList(i.sw(4,0,0)),2 << 14, 16, 16)
-# code to jump to iterate_arr_type, run subroutine, jump back, complete
-y = (i.makeList(i.jal(2,0)) + x + i.makeList(i.jalr(0,0))+ i.makeList(i.beq(0,0,-12)))
-for i in (z + x):
+p1 = xorshift32_random_in_256_range()
+# print(p1)
+fillRandomArray = iterate_arr_type(xorshift32_random_in_256_range_body(),4,8,12)
+for i in fillRandomArray:
     print(i)
-
+# z = iterate_arr_type(xorshift32_random_in_256_range(),2 << 8, 16, 16)
+# code to jump to iterate_arr_type, run subroutine, jump back, complete
+# for p in z:
+#     print(p)

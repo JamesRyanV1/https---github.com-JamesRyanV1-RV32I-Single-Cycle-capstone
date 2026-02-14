@@ -3,7 +3,7 @@ TOPLEVEL_LANG = verilog
 
 # CPU top level, checks blt loop 
 TOPLEVEL = cpu
-MODULE = loops
+MODULE = sw
 
 # rtl sources required for CPU
 VERILOG_SOURCES = \

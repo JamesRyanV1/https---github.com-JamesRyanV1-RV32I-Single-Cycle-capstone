@@ -3,7 +3,7 @@ TOPLEVEL_LANG = verilog
 
 # CPU top-level and BEQ integration test
 TOPLEVEL = cpu
-MODULE = loops
+MODULE = runInstructions
 
 # RTL sources required for CPU
 VERILOG_SOURCES = \
