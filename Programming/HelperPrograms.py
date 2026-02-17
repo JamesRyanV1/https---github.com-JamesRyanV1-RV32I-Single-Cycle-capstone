@@ -255,6 +255,10 @@ def new_snake() -> list[int]:
     )
     ret3 = i.makeList(
     )
+    apple_reg = i.makeList(
+        i.addi(27,0,0xfff), # load apple value into x27
+    )
+    return ret1 + rand + ret2 + ret3 + apple_reg
 def load_apple_to_array() -> list[int]:
     """
     puts an apple somewhere in the arr, represented by 0xfff, checks if the random spot is taken, if so keeps going
@@ -312,28 +316,28 @@ def move_snake() -> list[int]:
         i.addi(20,20,-16),
         i.beq(0,20,8), # if new head address is empty, jump to move
         i.beq(0,20,16), # if new head address is empty, jump to move
-        i.beq(20,0xfff,8), # if new head address is apple, jump to eat
+        i.beq(20,27,8), # if new head address is apple, jump to eat
         i.beq(0,0,16), # else jump to end
         # right:
         i.addi(20,22,0), # new head address = old head address + 1
         i.addi(20,20,4),
         i.beq(0,20,8), # if new head address is empty, jump to move
         i.beq(0,20,16), # if new head address is empty, jump to move
-        i.beq(20,0xfff,8), # if new head address is apple, jump to eat
+        i.beq(20,27,8), # if new head address is apple, jump to eat
         i.beq(0,0,16), # else jump to end
         # down:
         i.addi(20,22,0), # new head address = old head address + column count
         i.addi(20,20,64),
         i.beq(0,20,8), # if new head address is empty, jump to move
         i.beq(0,20,16), # if new head address is empty, jump to move
-        i.beq(20,0xfff,8),  # if new head address is apple, jump to eat
+        i.beq(20,27,8),  # if new head address is apple, jump to eat
         i.beq(0,0,16), # else jump to end
         # left:
         i.addi(20,22,0), # new head address = old head address - 1
         i.addi(20,20,-4),
         i.beq(0,20,8), # if new head address is empty, jump to move
         i.beq(0,20,16), # if new head address is empty, jump to move
-        i.beq(20,0xfff,8), # if new head address is apple, jump to eat
+        i.beq(20,27,8), # if new head address is apple, jump to eat
         i.beq(0,0,16), # else jump to end
         # move:
         i.sw(20,21,0), # store new head address in snake body register
@@ -345,7 +349,7 @@ def move_snake() -> list[int]:
         i.beq(0,0,16), # jump to end
     )
     check_apple = i.makeList(
-        i.beq(20,0xfff,8), # if new head address is apple, jump to eat
+        i.beq(20,27,8), # if new head address is apple, jump to eat
         i.beq(0,0,8), # else jump to end
         # eat:
         i.addi(21,21,1), # increment snake length
@@ -355,13 +359,20 @@ def move_snake() -> list[int]:
         i.addi(21,0,0), # reset snake length register
     )
     check_self = i.makeList(
-        i.beq(20,0xfff,8), # if new head address is apple, jump to end
+        i.beq(20,27,8), # if new head address is apple, jump to end
         i.beq(20,0,8), # if new head address is empty, jump to end
         i.beq(0,0,8), # else jump to end
         # die:
         i.addi(21,0,0), # reset snake length
     )# NOTE: SW ORDER MIGHT BE WRONG IN SUB
-    sub = iterate_arr_type(i.makeList(i.lw(25,4,0), i.addi(25,25,-1),i.sw(4,25,0)), 5120, 16, 16) # SUBTRACTS EACH ELEMENT OF AN ARRAY by 1, this is used to move the snake forward by 1, if the snake eats an apple, the new head is added before this subroutine so the tail is not subtracted, if the snake dies, the tail is not readded so it is subtracted and effectively removed from the array, if the snake moves normally, DOESNT LF APPLE OOOPS
+    sub = iterate_arr_type(i.makeList(
+        i.lw(25,4,0), 
+        i.beq(25,0,12), # if current element is 0, jump to increment
+        i.beq(25,27,8), # if current element is apple, jump to increment
+        i.addi(25,25,-1),
+        i.sw(4,25,0),
+
+        ), 5120, 16, 16) # SUBTRACTS EACH ELEMENT OF AN ARRAY by 1, this is used to move the snake forward by 1, if the snake eats an apple, the new head is added before this subroutine so the tail is not subtracted, if the snake dies, the tail is not readded so it is subtracted and effectively removed from the array, if the snake moves normally, DOESNT LF APPLE OOOPS
 
         
     # resets memory pointer, loops to get head, calculates new head position, checks if it's an apple or body, updates snake length and position
@@ -373,9 +384,10 @@ def play_snake() -> list[int]:
     move = move_snake()
     start = load_snake_array()
     apple = load_apple_to_array()
-    return start + apple + move + output #NOTE: make jumps so it actualy loops, right now no loop
-for i in play_snake():
-    print(i)
+    return start + i.makeList(i.lw(1,len(start),0)) + apple + move + output #NOTE: make jumps so it actualy loops, right now no loop
+# for i in play_snake():
+#     print(i)
+x33 = play_snake()
 # fillRandomArray = iterate_arr_type(xorshift32_random_in_256_range_body(),4,8,12)
 # for i in fillRandomArray:
 #     print(i)

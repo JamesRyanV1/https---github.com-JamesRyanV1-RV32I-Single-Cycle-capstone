@@ -126,7 +126,8 @@ from cocotb.triggers import RisingEdge, ReadOnly, Timer
 # arr = hp.iterate_arr_type(hp.load_snake_array, 0xfff, 16, 16) # input instructions here in i.instruction(), i.instruction, format
 # arr = (hp.z + [0,0,0,0])# premade list in hp
 
-arr = hp.fillRandomArray + [0,0,0,0] # xor shift and 
+# arr = hp.fillRandomArray + [0,0,0,0] # xor shift and 
+arr = hp.x33 + [0,0,0,0] # full snake game, change this to run different programs, make sure to end with 4 0s to signify end of program for now, eventually change this to an actual estop instruction when i add that
 @cocotb.test()
 async def run_instructions(dut):
     # Initialize pygame window for input capture
