@@ -201,7 +201,7 @@ def output_item_to_port() -> list[int]:
     HAS NO UNCONDITIONAL JUMPS TO REGISTERS SO DOES NOT CARE WHERE IN MEMORY IT IS PLACED
     returns instructions for a subroutine that puts 4 special charachters into the output port, then the width and height of the array, then the entire array
     """
-    body = i.makeList(
+    boddy = i.makeList(
         
         i.beq(0,7,28), # if x7 is 0, skip the initializing values
         i.addi(7,0,1), # sets register 7 to 1
@@ -236,7 +236,7 @@ def output_item_to_port() -> list[int]:
 
 
     )
-    return body
+    return boddy
 
 # p2 outputs the entire array that is processed by iterate_arr_type, along with some special charachters at the start and the width and height of the array, this is used for testing and debugging, but could be used for other things too, it has no jumps to registers so it can be placed anywhere in memory without needing to change anything
 def new_snake() -> list[int]: 
@@ -267,13 +267,14 @@ def load_apple_to_array() -> list[int]:
         i.addi(4,0,5120), # point to base adress of array in memory
     )
     rand = xorshift32_random_in_256_range_body() # generates a random number and puts it's short version in x31, also updates the state in x30 for the next random number
+    rand_len = len(rand)
     ret2 = i.makeList(
-        i.addr(20,31,8), # adds the current xorshift random number the array base adress
+        i.slli(20,31,2), # multiply random number by 4 (bytes per word)
+        i.addr(20,20,4), # add to array base address (x4)
         i.lw(23,20,0), # loads the value at the random spot from mem into x23
-        i.beq(0,23,8), # if the random spot is empty (0), jump to store apple
-        i.beq(0,0,-8), # else try again
-        i.addi(20,0,0xfff), # load apple value into x20
-        i.sw(20,23,4) # store the apple in the random spot
+        i.bne(0,23,-4*(rand_len+3)), # if spot NOT empty, jump back to rand start
+        i.addi(24,0,0xfff), # load apple value into x24
+        i.sw(20,24,0) # store the apple in the random spot (x20 = address)
     )
     return ret + rand + ret2
 def move_snake() -> list[int]:
@@ -289,81 +290,66 @@ def move_snake() -> list[int]:
         i.addi(20,0,0), # max snake value seen so far
         i.addi(21,0,0), # counter/index register
         i.addi(22,0,0), # head address register
-        i.blt(21,256,8), # if counter < total elements, jump to body
-        i.beq(0,0,40), # done scanning, jump to reset base address
-        i.lw(23,4,0), # load current element into x23
-        i.beq(0,23,20), # if current element is 0, jump to increment
-        i.blt(20,23,8), # if current element > max, jump to update
-        i.beq(0,0,12), # else jump to increment
-        i.addi(20,23,0), # update max value
+        i.addi(23,0,256), # load total elements into x23
+        i.bge(21,23,32), # if counter >= total elements, exit loop (8 instructions ahead)
+        i.lw(24,4,0), # load current element into x24
+        i.beq(0,24,16), # if current element is 0, jump to increment (4 instructions ahead)
+        i.bge(20,24,8), # if max >= current, skip update (2 instructions ahead)
+        i.addi(20,24,0), # update max value
         i.addi(22,4,0), # update head address
         i.addi(21,21,1), # increment counter
         i.addi(4,4,4), # advance pointer to next element
-        i.beq(0,0,-40), # jump back to compare
+        i.beq(0,0,-32), # jump back to compare (8 instructions back)
         i.addi(4,0,5120) # point back to base adress of array in memory
     )
     # head location is +1 if snake is right, -1 if left, column count if down, negative column count if up, this is added to the head address to get the new head address, if the new head address is an apple, snake len is increased by 1, if it's a body, snake dies and len is set to 0, if it's empty, snake moves forward by 1
-    moveHead = i.makeList( # NOTE: fix  jumps i coppy and pasted them so none of them actualy jump to the subtraction phase
+    moveHead = i.makeList(
         i.addi(20,0,0), # new head address register
         i.addi(21,0,0), # value at new head address register
-        i.beq(5,38,8), # if input is up, jump to up
-        i.beq(5,37,8), # if input is right, jump to right
-        i.beq(5,40,8), # if input is down, jump to down
-        i.beq(5,39,8), # if input is left, jump to left
-        i.beq(0,0,16), # invalid input, jump to end
+        i.beq(5,38,20), # if input is up, jump to up (5 instructions ahead)
+        i.beq(5,37,32), # if input is right, jump to right (8 instructions ahead)
+        i.beq(5,40,44), # if input is down, jump to down (11 instructions ahead)
+        i.beq(5,39,56), # if input is left, jump to left (14 instructions ahead)
+        i.beq(0,0,64), # invalid input, jump to end (16 instructions ahead)
         # up:
         i.addi(20,22,0), # new head address = old head address - column count
-        i.addi(20,20,-16),
-        i.beq(0,20,8), # if new head address is empty, jump to move
-        i.beq(0,20,16), # if new head address is empty, jump to move
-        i.beq(20,27,8), # if new head address is apple, jump to eat
-        i.beq(0,0,16), # else jump to end
+        i.addi(20,20,-64), # -64 bytes = -16 words (16 columns * 4 bytes)
+        i.lw(21,20,0), # load value at new head address into x21
+        i.beq(0,0,44), # jump past other direction handlers (11 instructions ahead)
         # right:
         i.addi(20,22,0), # new head address = old head address + 1
-        i.addi(20,20,4),
-        i.beq(0,20,8), # if new head address is empty, jump to move
-        i.beq(0,20,16), # if new head address is empty, jump to move
-        i.beq(20,27,8), # if new head address is apple, jump to eat
-        i.beq(0,0,16), # else jump to end
+        i.addi(20,20,4), # +4 bytes = +1 word
+        i.lw(21,20,0), # load value at new head address into x21
+        i.beq(0,0,32), # jump past other direction handlers (8 instructions ahead)
         # down:
         i.addi(20,22,0), # new head address = old head address + column count
-        i.addi(20,20,64),
-        i.beq(0,20,8), # if new head address is empty, jump to move
-        i.beq(0,20,16), # if new head address is empty, jump to move
-        i.beq(20,27,8),  # if new head address is apple, jump to eat
-        i.beq(0,0,16), # else jump to end
+        i.addi(20,20,64), # +64 bytes = +16 words (16 columns * 4 bytes)
+        i.lw(21,20,0), # load value at new head address into x21
+        i.beq(0,0,20), # jump past other direction handlers (5 instructions ahead)
         # left:
         i.addi(20,22,0), # new head address = old head address - 1
-        i.addi(20,20,-4),
-        i.beq(0,20,8), # if new head address is empty, jump to move
-        i.beq(0,20,16), # if new head address is empty, jump to move
-        i.beq(20,27,8), # if new head address is apple, jump to eat
-        i.beq(0,0,16), # else jump to end
-        # move:
-        i.sw(20,21,0), # store new head address in snake body register
-        i.addi(21,21,1), # increment snake length
-        i.sw(20,21,0), # store new head address in snake body register
-        i.addi(4,0,5120), # point to base adress of array in memory
-        i.addi(22,0,0), # reset head address register
-        i.addi(21,0,0), # reset snake length register
-        i.beq(0,0,16), # jump to end
+        i.addi(20,20,-4), # -4 bytes = -1 word
+        i.lw(21,20,0), # load value at new head address into x21
+        i.beq(0,0,8), # jump past other direction handlers (2 instructions ahead)
+        # After all direction handlers, check what's at the new position:
+        # x20 has new head address, x21 has value at that address
     )
     check_apple = i.makeList(
-        i.beq(20,27,8), # if new head address is apple, jump to eat
-        i.beq(0,0,8), # else jump to end
+        i.beq(21,27,8), # if value at new head is apple (x27), jump to eat (2 instructions ahead)
+        i.beq(0,0,20), # else skip eat section (5 instructions ahead)
         # eat:
         i.addi(21,21,1), # increment snake length
-        i.sw(20,21,0), # store new head address in snake body register
-        i.addi(4,0,5120), # point to base adress of array in memory
-        i.addi(22,0,0), # reset head address register
-        i.addi(21,0,0), # reset snake length register
+        i.sw(20,21,0), # store new head value at new position
+        # no reset needed here, continue to check_self
     )
     check_self = i.makeList(
-        i.beq(20,27,8), # if new head address is apple, jump to end
-        i.beq(20,0,8), # if new head address is empty, jump to end
-        i.beq(0,0,8), # else jump to end
-        # die:
-        i.addi(21,0,0), # reset snake length
+        i.beq(21,27,16), # if value is apple, skip collision check (4 instructions ahead)
+        i.beq(21,0,12), # if value is empty (0), skip collision (3 instructions ahead)
+        # Hit snake body - die:
+        i.addi(21,0,0), # reset snake length to 0 (death)
+        i.beq(0,0,8), # jump to end (2 instructions ahead)
+        # Normal move or ate apple:
+        i.sw(20,21,0), # store new head value at new position
     )# NOTE: SW ORDER MIGHT BE WRONG IN SUB
     sub = iterate_arr_type(i.makeList(
         i.lw(25,4,0), 
@@ -384,11 +370,13 @@ def play_snake() -> list[int]:
     move = move_snake()
     start = load_snake_array()
     apple = load_apple_to_array()
-    return start + i.makeList(i.lw(1,len(start),0)) + apple + move + output #NOTE: make jumps so it actualy loops, right now no loop
-# for i in play_snake():
-#     print(i)
+    start2 = new_snake()
+    x = len(start)
+    return start + i.makeList(i.lw(x*4,1,4)) + start2 + apple + move + output + i.makeList(i.jalr(0,1))#NOTE: make jumps so it actualy loops, right now no loop
+for p in play_snake():
+    print(p)
 x33 = play_snake()
-# fillRandomArray = iterate_arr_type(xorshift32_random_in_256_range_body(),4,8,12)
+fillRandomArray = iterate_arr_type(xorshift32_random_in_256_range_body(),4,8,12)
 # for i in fillRandomArray:
 #     print(i)
 # z = iterate_arr_type(xorshift32_random_in_256_range(),2 << 8, 16, )

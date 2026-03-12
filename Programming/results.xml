@@ -1,6 +1,6 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1771283345" />
-    <testcase name="run_instructions" classname="runInstructions" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/Programming/runInstructions.py" lineno="130" time="1.6061346530914307" sim_time_ns="51761.0" ratio_time="32227.06134904211" />
+    <property name="random_seed" value="1773340440" />
+    <testcase name="test_nested_loop" classname="testGeneralProgram" file="/home/james/https---github.com-JamesRyanV1-RV32I-Single-Cycle-capstone/Programming/testGeneralProgram.py" lineno="31" time="1.215608835220337" sim_time_ns="371.0" ratio_time="305.1968604133696" />
   </testsuite>
 </testsuites>
