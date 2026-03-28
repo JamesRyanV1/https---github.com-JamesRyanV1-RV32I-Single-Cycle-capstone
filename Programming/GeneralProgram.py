@@ -36,7 +36,24 @@ class GeneralizedProgram:
             i.addi(countReg,countReg,1), # increment loop counter
             i.bne(countReg,timesReg,loopOffsetBytes) # if loop counter != times, jump back to start of loop
         )
-
+    def whileLoop(self,loopInstructions, conditionReg): # THE LOOP CAN BE A PROGRAM ITSELF: Loops within loops 
+        """
+        Adds a loop that will run the given string of instructions while the value in conditionReg is not 0.
+        Loop will be added at the end of loopInstructions, and will jump back to the start of loopInstructions in pc until conditionReg is 0.
+        Takes: 1d array of instructions made by instructions.py
+        Takes: Int number of times to loop, the countReg, and the timesReg (regs 22-29 will be free to allow for a loop depth of 4)
+        Adds loop to self.instructions
+        """
+        loopStartAdress = len(self.instructions) # loop will be added at the end of current instructions
+        self.instructions += loopInstructions
+        # Branch immediates are PC-relative byte offsets.
+        # In this CPU, taken branch updates PC as: pc <= pc + offset + 4.
+        # Subtract 4 bytes so target lands exactly on loopStartAdress.
+        bneIndex = len(self.instructions) + 1
+        loopOffsetBytes = ((loopStartAdress - bneIndex) * 4) - 4
+        self.instructions += i.makeList(
+            i.bne(conditionReg,0,loopOffsetBytes) # if conditionReg != 0, jump back to start of loop
+        )
 # testProgram = GeneralizedProgram(
 #     i.makeList(
 #         i.addi(1,0,5) # random instruction
