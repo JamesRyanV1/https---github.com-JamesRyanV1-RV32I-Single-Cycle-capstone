@@ -385,8 +385,8 @@ def play_snake() -> list[int]:
     start = load_snake_array()
     apple = load_apple_to_array()
     return start + i.makeList(i.lw(1,len(start),0)) + apple + move + output #NOTE: make jumps so it actualy loops, right now no loop
-# for i in play_snake():
-#     print(i)
+for i in play_snake():
+    print(i)
 x33 = play_snake()
 # fillRandomArray = iterate_arr_type(xorshift32_random_in_256_range_body(),4,8,12)
 # for i in fillRandomArray:
