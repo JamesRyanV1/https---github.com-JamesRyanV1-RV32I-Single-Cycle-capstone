@@ -123,7 +123,8 @@ def lw(rd: int, rs1: int, imm: int) -> int:
     return _encode_i_type(rd, rs1, imm, func3=0b010, opcode=OP_LOAD)
 
 
-def sw(rs1: int, rs2: int, imm: int) -> int:
+def sw(rs2: int, rs1: int, imm: int) -> int:
+    """Store word: sw rs2, imm(rs1). Args are (data_reg, base_reg, imm)."""
     return _encode_s_type(rs1, rs2, imm, func3=0b010, opcode=OP_STORE)
 
 
